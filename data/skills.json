@@ -1,0 +1,5 @@
+{
+  "data_science": ["python", "r", "sql", "pandas", "numpy", "scikit-learn", "tensorflow", "pytorch", "machine learning", "deep learning", "nlp", "data analysis", "statistics", "tableau", "aws"],
+  "software_engineer": ["python", "java", "javascript", "react", "node.js", "docker", "aws", "microservices", "rest api", "sql", "git", "jenkins", "agile"],
+  "product_manager": ["agile", "scrum", "jira", "stakeholder", "roadmap", "user stories", "metrics", "kpi", "sql", "analytics"]
+}
