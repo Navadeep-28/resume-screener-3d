@@ -1,0 +1,12 @@
+Flask
+pdfplumber
+python-docx
+scikit-learn
+pandas
+numpy
+nltk
+spacy
+plotly
+reportlab
+python-dotenv
+Werkzeug
