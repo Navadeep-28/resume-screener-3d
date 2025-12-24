@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div id="three-canvas"></div>
+
+<nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-3" href="#">
+            <i class="fas fa-brain me-2"></i>AI Resume Screener 3D
+        </a>
+        <div class="ms-auto d-flex align-items-center">
+            {% if session.get('user') %}
+                <span class="me-3 text-white-50 small">
+                    Logged in as {{ session.get('user') }} ({{ session.get('role') }})
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+                    Logout
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid mt-5 pt-5">
+    <div class="row justify-content-center">
+        <!-- Upload panel -->
+        <div class="col-lg-4 mb-4">
+            <div class="card glass-card shadow-lg p-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-file-upload fa-4x text-primary mb-3"></i>
+                    <h2 class="fw-bold text-white">Upload Resume</h2>
+                    <p class="text-white-50 small mb-0">
+                        Select a job role and upload a PDF/DOCX resume to analyze.
+                    </p>
+                </div>
+
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label text-white fw-bold">Job Role</label>
+                        <select class="form-select bg-transparent text-white" name="job_category" required>
+                            <option value="">Select Job Role</option>
+                            <option value="data_science">Data Scientist</option>
+                            <option value="software_engineer">Software Engineer</option>
+                            <option value="product_manager">Product Manager</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-white fw-bold">Resume File</label>
+                        <input type="file"
+                               class="form-control bg-transparent text-white border-white"
+                               name="resume"
+                               accept=".pdf,.docx"
+                               required>
+                        <div class="form-text text-white-50 small">
+                            Only PDF or DOCX files up to 16 MB.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-rocket me-2"></i>Analyze Resume
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results panel -->
+        <div class="col-lg-8">
+            <!-- Loading state -->
+            <div id="loading" class="d-none text-center p-5">
+                <div class="spinner-border text-primary mb-3"
+                     role="status"
+                     style="width: 4rem; height: 4rem;"></div>
+                <h4 class="text-white">Analyzing your resume with AI...</h4>
+                <p class="text-white-50">
+                    Extracting skills, computing similarity, and generating insights.
+                </p>
+            </div>
+
+            <!-- Results -->
+            <div id="results" class="d-none">
+                <div class="card glass-card shadow-lg">
+                    <div class="card-header bg-gradient-primary text-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Analysis Complete
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row text-center mb-4">
+                            <div class="col-12">
+                                <div class="score-circle mb-3" id="overallScore">0%</div>
+                                <h4 class="text-white" id="jobTitle"></h4>
+                                <p class="text-white-50 small" id="decisionText">
+                                    Overall decision based on TF‑IDF match, skills, and experience.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Charts row 1: pie + bars -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div id="scorePie" style="width:100%; height:250px;"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div id="scoreBars" style="width:100%; height:250px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Charts row 2: heatmap -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div id="overlapHeatmap" style="width:100%; height:300px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Download -->
+                        <div class="mt-4">
+                            <a id="downloadBtn" class="btn btn-success btn-lg w-100" href="#" download>
+                                <i class="fas fa-file-pdf me-2"></i>Download Detailed PDF Report
+                            </a>
+                        </div>
+
+                        <!-- Matched / missing skills summary -->
+                        <div class="mt-4 text-white-50 small" id="skillsSummary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
