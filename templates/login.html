@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login – 3D Resume Screener</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- Main CSS (neon theme) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- 3D background canvas (same id used in app.js) -->
+    <div id="three-canvas"></div>
+
+    <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="glass-card p-4" style="max-width: 420px; width: 100%;">
+            <div class="text-center mb-4">
+                <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                <h3 class="fw-bold text-white mb-1">Sign in</h3>
+                <p class="text-white-50 small mb-0">
+                    Secure access for HR and Admin to the neon AI dashboard.
+                </p>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger py-2">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label text-white fw-semibold">Username</label>
+                    <input name="username" class="form-control" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label text-white fw-semibold">Password</label>
+                    <input name="password" type="password" class="form-control" required>
+                </div>
+                <button class="btn btn-primary w-100 mb-2" type="submit">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </button>
+            </form>
+
+            <p class="mt-3 small text-center text-white-50">
+                New user?
+                <a href="{{ url_for('register') }}" class="text-decoration-none" style="color:#00e6ff;">
+                    Create an HR/Admin account
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Scripts: Bootstrap, Three.js, Plotly (optional for background consistency), app.js to init 3D -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+            integrity="sha512-pvF8Ww1+RZFwVnqGcm87G1xv8TlnKqSZ0XvP2qoXyujWHz5T4XxR0y1Qb4+JrQozkG6lJ5aPXlOPAW5vfeL4WQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
