@@ -150,6 +150,12 @@ function displayResults(results, pdfUrl) {
     const jobTitle      = document.getElementById('jobTitle');
     const decisionText  = document.getElementById('decisionText');
     const skillsSummary = document.getElementById('skillsSummary');
+        const blindUsed = results.blind_mode;
+
+    if (blindUsed && decisionText) {
+        decisionText.textContent += ' (Blind screening: identity fields hidden from the model.)';
+    }
+
 
     if (resultsDiv) resultsDiv.classList.remove('d-none');
 
