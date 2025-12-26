@@ -31,6 +31,14 @@
                         </label>
                     </div>
 
+                    <!-- IDEA 5: Comparison mode toggle -->
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" id="compareModeSwitch" name="compare_mode">
+                        <label class="form-check-label text-white" for="compareModeSwitch">
+                            <i class="fas fa-balance-scale me-1"></i>Compare Mode (2 resumes)
+                        </label>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label text-white fw-bold">Job Role</label>
                         <select class="form-select bg-transparent text-white" name="job_category" required>
@@ -49,23 +57,41 @@
                                name="resume"
                                accept=".pdf,.docx"
                                required>
-                        <div class="form-text text-white-50 small">
-                            Single PDF or DOCX file (up to 16 MB).
+                    </div>
+
+                    <!-- IDEA 5: Comparison inputs (2 files) -->
+                    <div id="compareResumeInput" class="mb-3 d-none">
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label text-white fw-bold">Resume 1</label>
+                                <input type="file"
+                                       class="form-control bg-transparent text-white border-white"
+                                       name="resume1"
+                                       accept=".pdf,.docx"
+                                       required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-white fw-bold">Resume 2</label>
+                                <input type="file"
+                                       class="form-control bg-transparent text-white border-white"
+                                       name="resume2"
+                                       accept=".pdf,.docx"
+                                       required>
+                            </div>
+                        </div>
+                        <div class="form-text text-white-50 small mt-2">
+                            Compare two candidates head-to-head.
                         </div>
                     </div>
 
-                    <!-- Batch resume input (hidden by default) -->
+                    <!-- Batch input (hidden when compare mode) -->
                     <div id="batchResumeInput" class="mb-3 d-none">
                         <label class="form-label text-white fw-bold">Select Multiple Resumes</label>
                         <input type="file"
                                class="form-control bg-transparent text-white border-white"
                                name="resumes"
                                accept=".pdf,.docx"
-                               multiple
-                               required>
-                        <div class="form-text text-white-50 small">
-                            Select up to 10 PDF/DOCX files (32 MB total).
-                        </div>
+                               multiple>
                         <div id="batchFileList" class="mt-2 text-white-50 small"></div>
                     </div>
 
@@ -89,74 +115,77 @@
         <div class="col-lg-8">
             <!-- Loading state -->
             <div id="loading" class="d-none text-center p-5">
-                <div class="spinner-border text-primary mb-3"
-                     role="status"
-                     style="width: 4rem; height: 4rem;"></div>
-                <h4 class="text-white" id="loadingText">Analyzing your resume(s)...</h4>
-                <p class="text-white-50" id="loadingDetail">
-                    Extracting skills, computing similarity, and generating insights.
-                </p>
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 4rem; height: 4rem;"></div>
+                <h4 class="text-white" id="loadingText">Analyzing...</h4>
                 <div class="progress mt-3" style="height: 8px;">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                         role="progressbar" style="width: 0%"></div>
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%"></div>
                 </div>
             </div>
 
-            <!-- Single result -->
-            <div id="singleResult" class="d-none">
-                <!-- [Previous single result content stays the same] -->
+            <!-- IDEA 5: Comparison Results -->
+            <div id="compareResults" class="d-none">
                 <div class="card glass-card shadow-lg">
-                    <div class="card-header bg-gradient-primary text-white">
+                    <div class="card-header bg-gradient-warning text-white d-flex justify-content-between">
                         <h3 class="mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Analysis Complete
+                            <i class="fas fa-balance-scale me-2"></i>Head-to-Head Comparison
                         </h3>
-                    </div>
-                    <!-- ... rest of single result content ... -->
-                </div>
-            </div>
-
-            <!-- Batch results (NEW - Idea 4) -->
-            <div id="batchResults" class="d-none">
-                <div class="card glass-card shadow-lg">
-                    <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center">
-                        <h3 class="mb-0">
-                            <i class="fas fa-layer-group me-2"></i>Batch Analysis Complete
-                        </h3>
-                        <span class="badge bg-light text-dark fs-6" id="batchCount">0</span>
+                        <div>
+                            <span class="badge bg-success fs-6" id="winnerBadge"></span>
+                        </div>
                     </div>
                     <div class="card-body p-4">
-                        <!-- Leaderboard table -->
-                        <div class="table-responsive mb-4">
-                            <table class="table table-dark table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Rank</th>
-                                        <th>Candidate</th>
-                                        <th>Score</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="batchLeaderboard">
-                                    <!-- Populated by JS -->
-                                </tbody>
-                            </table>
+                        <!-- Side-by-side comparison -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 text-center">
+                                <div class="score-circle winner-circle mb-3" id="score1">0%</div>
+                                <h5 class="text-white fw-bold" id="candidate1Name">Candidate 1</h5>
+                                <div id="candidate1Skills" class="text-white-50 small"></div>
+                            </div>
+                            <div class="col-md-6 text-center">
+                                <div class="score-circle loser-circle mb-3" id="score2">0%</div>
+                                <h5 class="text-white fw-bold" id="candidate2Name">Candidate 2</h5>
+                                <div id="candidate2Skills" class="text-white-50 small"></div>
+                            </div>
                         </div>
 
-                        <!-- Top 3 detailed cards -->
-                        <div class="row" id="top3Details">
-                            <!-- Populated by JS -->
+                        <!-- Comparison charts -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div id="compareBarChart" style="width:100%; height:300px;"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div id="compareRadarChart" style="width:100%; height:300px;"></div>
+                            </div>
                         </div>
 
-                        <!-- Bulk download -->
+                        <!-- Key differences -->
                         <div class="mt-4">
-                            <a id="bulkDownloadBtn" class="btn btn-success btn-lg w-100" href="#" download>
-                                <i class="fas fa-file-archive me-2"></i>Download All Reports (ZIP)
-                            </a>
+                            <h5 class="text-white mb-3">
+                                <i class="fas fa-list-alt me-2"></i>Key Differences
+                            </h5>
+                            <div id="keyDifferences" class="row text-white-50 small"></div>
+                        </div>
+
+                        <!-- Downloads -->
+                        <div class="mt-4 row">
+                            <div class="col-md-6">
+                                <a id="downloadBtn1" class="btn btn-outline-primary w-100 mb-2" href="#" download>
+                                    <i class="fas fa-file-pdf me-2"></i>Candidate 1 Report
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a id="downloadBtn2" class="btn btn-outline-primary w-100 mb-2" href="#" download>
+                                    <i class="fas fa-file-pdf me-2"></i>Candidate 2 Report
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Single/Batch results (previous content) -->
+            <div id="singleResult" class="d-none">...</div>
+            <div id="batchResults" class="d-none">...</div>
         </div>
     </div>
 </div>
