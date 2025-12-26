@@ -3,6 +3,92 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const batchSwitch = document.getElementById("batchModeSwitch");
+    const compareSwitch = document.getElementById("compareModeSwitch");
+    const jdSwitch = document.getElementById("jdModeSwitch");
+
+    const singleInputBlock = document.getElementById("singleResumeInput");
+    const compareInputBlock = document.getElementById("compareResumeInput");
+    const batchInputBlock = document.getElementById("batchResumeInput");
+    const jdBlock = document.getElementById("jdInput");
+
+    const singleInput = document.querySelector("input[name='resume']");
+    const resume1Input = document.querySelector("input[name='resume1']");
+    const resume2Input = document.querySelector("input[name='resume2']");
+    const batchInput = document.querySelector("input[name='resumes']");
+    const submitText = document.getElementById("submitText");
+
+    function updateMode() {
+        const batchOn = batchSwitch.checked;
+        const compareOn = compareSwitch.checked;
+
+        // Ensure only one of batch / compare is active
+        if (batchOn && compareOn) {
+            // If user turns one on while the other is already on, turn off the other
+            if (this === batchSwitch) {
+                compareSwitch.checked = false;
+            } else if (this === compareSwitch) {
+                batchSwitch.checked = false;
+            }
+        }
+
+        const effectiveBatch = batchSwitch.checked;
+        const effectiveCompare = compareSwitch.checked;
+
+        // Reset required flags
+        singleInput.required = false;
+        if (resume1Input) resume1Input.required = false;
+        if (resume2Input) resume2Input.required = false;
+        if (batchInput) batchInput.required = false;
+
+        // Single mode (default)
+        if (!effectiveBatch && !effectiveCompare) {
+            singleInputBlock.classList.remove("d-none");
+            compareInputBlock.classList.add("d-none");
+            batchInputBlock.classList.add("d-none");
+            singleInput.required = true;
+            submitText.textContent = "Analyze Resume";
+        }
+
+        // Batch mode
+        if (effectiveBatch && !effectiveCompare) {
+            singleInputBlock.classList.add("d-none");
+            compareInputBlock.classList.add("d-none");
+            batchInputBlock.classList.remove("d-none");
+            batchInput.required = true;
+            submitText.textContent = "Analyze Batch";
+        }
+
+        // Compare mode
+        if (effectiveCompare && !effectiveBatch) {
+            singleInputBlock.classList.add("d-none");
+            compareInputBlock.classList.remove("d-none");
+            batchInputBlock.classList.add("d-none");
+            if (resume1Input) resume1Input.required = true;
+            if (resume2Input) resume2Input.required = true;
+            submitText.textContent = "Compare Candidates";
+        }
+    }
+
+    function updateJD() {
+        if (jdSwitch.checked) {
+            jdBlock.classList.remove("d-none");
+        } else {
+            jdBlock.classList.add("d-none");
+        }
+    }
+
+    batchSwitch.addEventListener("change", updateMode);
+    compareSwitch.addEventListener("change", updateMode);
+    jdSwitch.addEventListener("change", updateJD);
+
+    updateMode();
+    updateJD();
+});
+</script>
 {% endblock %}
 
 {% block content %}
@@ -11,7 +97,7 @@
 
 <div class="container-fluid mt-5">
     <div class="row justify-content-center">
-        <!-- Upload panel (ALL Ideas implemented) -->
+        <!-- Upload panel -->
         <div class="col-lg-4 mb-4">
             <div class="card glass-card shadow-lg p-4">
                 <div class="text-center mb-4">
@@ -25,8 +111,11 @@
                     </p>
                 </div>
 
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <!-- Idea 4: Batch toggle -->
+                <form id="uploadForm"
+                      action="{{ url_for('analyze') }}"
+                      method="post"
+                      enctype="multipart/form-data">
+                    <!-- Batch toggle -->
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" id="batchModeSwitch" name="batch_mode">
                         <label class="form-check-label text-white" for="batchModeSwitch">
@@ -34,7 +123,7 @@
                         </label>
                     </div>
 
-                    <!-- Idea 5: Compare toggle -->
+                    <!-- Compare toggle -->
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" id="compareModeSwitch" name="compare_mode">
                         <label class="form-check-label text-white" for="compareModeSwitch">
@@ -42,7 +131,7 @@
                         </label>
                     </div>
 
-                    <!-- Idea 6: JD Matching toggle -->
+                    <!-- JD Matching toggle -->
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" id="jdModeSwitch" name="jd_mode">
                         <label class="form-check-label text-white" for="jdModeSwitch">
@@ -61,14 +150,14 @@
                         </select>
                     </div>
 
-                    <!-- Idea 6: Job Description textarea -->
+                    <!-- JD textarea -->
                     <div id="jdInput" class="mb-3 d-none">
                         <label class="form-label text-white fw-bold">Job Description</label>
                         <textarea class="form-control bg-transparent text-white border-white" 
-                                  name="job_description" rows="4" 
-                                  placeholder="Paste the full job description here... (Requirements, skills, experience...)"></textarea>
+                                  name="job_description" rows="4"
+                                  placeholder="Paste the full job description here..."></textarea>
                         <div class="form-text text-white-50 small">
-                            Custom JD for precise matching (highly recommended)
+                            Custom JD for precise matching (optional but powerful).
                         </div>
                     </div>
 
@@ -79,7 +168,7 @@
                                name="resume" accept=".pdf,.docx" required>
                     </div>
 
-                    <!-- Idea 5: Comparison inputs -->
+                    <!-- Compare inputs -->
                     <div id="compareResumeInput" class="mb-3 d-none">
                         <div class="row">
                             <div class="col-6">
@@ -95,7 +184,7 @@
                         </div>
                     </div>
 
-                    <!-- Idea 4: Batch input -->
+                    <!-- Batch input -->
                     <div id="batchResumeInput" class="mb-3 d-none">
                         <label class="form-label text-white fw-bold">Multiple Resumes</label>
                         <input type="file" class="form-control bg-transparent text-white border-white"
@@ -103,7 +192,7 @@
                         <div id="batchFileList" class="mt-2 text-white-50 small"></div>
                     </div>
 
-                    <!-- Idea 2: Blind screening -->
+                    <!-- Blind screening -->
                     <div class="form-check form-switch mb-4">
                         <input class="form-check-input" type="checkbox" id="blindModeSwitch" name="blind_mode">
                         <label class="form-check-label text-white-50 small" for="blindModeSwitch">
@@ -119,7 +208,7 @@
             </div>
         </div>
 
-        <!-- Results panel (simplified - JS handles modes) -->
+        <!-- Results panel -->
         <div class="col-lg-8">
             <div id="loading" class="d-none text-center p-5">
                 <div class="spinner-border text-primary mb-3" role="status" style="width: 4rem; height: 4rem;"></div>
@@ -130,7 +219,6 @@
                 </div>
             </div>
 
-            <!-- Results will be populated by JavaScript -->
             <div id="resultsContainer"></div>
         </div>
     </div>
