@@ -35,7 +35,7 @@ class ResumeScreener:
             'software_engineer': [
                 'python', 'java', 'javascript', 'react', 'node.js', 'docker', 'kubernetes',
                 'aws', 'microservices', 'rest api', 'sql', 'nosql', 'git', 'jenkins',
-                'agile', ' scrum', 'mongodb', 'postgresql'
+                'agile', 'scrum', 'mongodb', 'postgresql'
             ],
             'product_manager': [
                 'agile', 'scrum', 'jira', 'confluence', 'stakeholder', 'roadmap',
@@ -74,8 +74,23 @@ class ResumeScreener:
             with open(self.model_path, 'wb') as f:
                 pickle.dump(self.vectorizer, f)
 
-    def score_resume(self, resume_text, job_category):
-        jd_text = self.jds.get(job_category, "")
+    def score_resume(self, resume_text, job_category, job_description=None):
+        """
+        **IDEA 6**: Score resume against job category OR custom job description.
+        
+        Args:
+            resume_text: Processed resume text
+            job_category: Job role ('data_science', etc.)
+            job_description: Optional custom JD text
+        """
+        # **IDEA 6: Use custom JD if provided**
+        if job_description:
+            jd_text = job_description
+            jd_mode = True
+        else:
+            jd_text = self.jds.get(job_category, "")
+            jd_mode = False
+
         skills = self.skills_db.get(job_category, [])
 
         # ---------- TF-IDF similarity ----------
@@ -88,16 +103,26 @@ class ResumeScreener:
         matched_skills = [s for s in skills if s.lower() in resume_words]
         skill_score = len(matched_skills) / max(len(skills), 1)
 
-        # ---------- Experience extraction (heuristic) ----------
+        # ---------- Experience extraction ----------
         exp_score, years = self._extract_experience(resume_text)
 
+        # ---------- **IDEA 6: JD-specific keyword matching** ----------
+        jd_keywords = self._extract_keywords(jd_text)
+        resume_keywords = self._extract_keywords(resume_text)
+        jd_keyword_match = len(set(jd_keywords) & set(resume_keywords)) / max(len(jd_keywords), 1)
+
         # ---------- Final weighted score ----------
-        final_score = (similarity * 0.5 + skill_score * 0.3 + exp_score * 0.2) * 100
+        if jd_mode:
+            # **JD Mode**: 60% TF-IDF + 20% skills + 10% JD keywords + 10% experience
+            final_score = (similarity * 0.6 + skill_score * 0.2 + jd_keyword_match * 0.1 + exp_score * 0.1) * 100
+        else:
+            # **Category Mode**: Original weighting
+            final_score = (similarity * 0.5 + skill_score * 0.3 + exp_score * 0.2) * 100
 
         # ---------- Heatmap data ----------
         heatmap_data = self._generate_heatmap_data(resume_text, jd_text)
 
-        # ---------- Explainability block ----------
+        # ---------- Explainability ----------
         top_phrases = self._get_top_matching_phrases(resume_text, jd_text)
         missing_critical = self._get_missing_critical_skills(matched_skills, job_category)
         experience_explanation = self._build_experience_explanation(exp_score, years)
@@ -108,17 +133,35 @@ class ResumeScreener:
             "experience_explanation": experience_explanation
         }
 
-        return {
-            'overall': round(final_score, 2),
-            'tfidf': round(similarity * 100, 2),
-            'skills': round(skill_score * 100, 2),
+        result = {
+            'overall_score': round(final_score, 2),  # Renamed for frontend consistency
+            'overall': round(final_score, 2),       # Keep backward compatibility
+            'tfidf_similarity': round(similarity * 100, 2),
+            'tfidf': round(similarity * 100, 2),    # Backward compatibility
+            'skills_match': round(skill_score * 100, 2),
+            'skills': round(skill_score * 100, 2),  # Backward compatibility
             'experience': round(exp_score * 100, 2),
-            'matched_skills': matched_skills[:10],  # Top 10
+            'jd_keyword_match': round(jd_keyword_match * 100, 2) if jd_mode else 0,
+            'jd_mode': jd_mode,
+            'matched_skills': matched_skills[:10],
             'missing_skills': [s for s in skills[:10] if s.lower() not in resume_words],
+            'jd_used_keywords': list(set(jd_keywords) & set(resume_keywords))[:10] if jd_mode else [],
+            'jd_missing_keywords': list(set(jd_keywords) - set(resume_keywords))[:10] if jd_mode else [],
             'heatmap_data': heatmap_data,
             'job_category': job_category.title().replace('_', ' '),
             'explanation': explanation
         }
+
+        return result
+
+    def _extract_keywords(self, text, top_n=20):
+        """Extract key skills/keywords from text."""
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
+        # Filter common stop words and short terms
+        filtered = [w for w in words if len(w) > 3 and w not in {
+            'with', 'from', 'have', 'been', 'that', 'this', 'your', 'will', 'they'
+        }]
+        return list(set(filtered))[:top_n]
 
     def _extract_experience(self, text):
         """Extract experience years heuristically"""
@@ -142,8 +185,8 @@ class ResumeScreener:
 
     def _generate_heatmap_data(self, resume, jd):
         """Generate data for word overlap heatmap"""
-        resume_words = set(resume.lower().split())
-        jd_words = set(jd.lower().split())
+        resume_words = set(re.findall(r'\b[a-zA-Z]{3,}\b', resume.lower()))
+        jd_words = set(re.findall(r'\b[a-zA-Z]{3,}\b', jd.lower()))
         common = resume_words.intersection(jd_words)
 
         return {
@@ -153,13 +196,10 @@ class ResumeScreener:
             'common_percentage': round(len(common) / len(jd_words) * 100, 2) if jd_words else 0
         }
 
-    # ---------- explainability helpers ----------
+    # ---------- explainability helpers (unchanged) ----------
 
     def _get_top_matching_phrases(self, resume_text, jd_text):
-        """
-        Simple frequency-based explanation:
-        most frequent overlapping tokens between resume and JD.
-        """
+        """Most frequent overlapping tokens between resume and JD."""
         resume_tokens = [t.lower() for t in re.findall(r'\w+', resume_text)]
         jd_tokens = set([t.lower() for t in re.findall(r'\w+', jd_text)])
 
@@ -185,5 +225,3 @@ class ResumeScreener:
             return f"Some experience (~{years_experience} years); may need mentoring."
         else:
             return "No explicit years of experience detected; score based on other signals."
-
-
