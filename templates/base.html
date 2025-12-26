@@ -14,23 +14,23 @@
 
     <!-- Main CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
+
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-dark text-white">
-    <!-- Fixed navbar with 3D branding -->
+    <!-- Fixed navbar with branding -->
     <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark border-bottom border-primary">
         <div class="container">
             <a class="navbar-brand fw-bold fs-3" href="{{ url_for('index') }}">
                 <i class="fas fa-brain me-2 text-primary"></i>AI Resume Screener
             </a>
-            
+
             <div class="ms-auto d-flex align-items-center">
                 <!-- Candidate feedback link (always visible) -->
                 <a href="{{ url_for('candidate') }}" class="btn btn-outline-primary btn-sm me-2">
                     <i class="fas fa-user-graduate me-1"></i>Candidate
                 </a>
-                
+
                 {% if session.get('user') %}
                     <span class="me-3 text-white-50 small">
                         {{ session.get('user') }} ({{ session.get('role') }})
@@ -48,9 +48,9 @@
     </nav>
 
     <!-- Main content with top padding for fixed navbar -->
-    <div class="pt-5">
+    <main class="pt-5 mt-4">
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
     <!-- Bootstrap JS bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -60,7 +60,7 @@
             integrity="sha512-pvF8Ww1+RZFwVnqGcm87G1xv8TlnKqSZ0XvP2qoXyujWHz5T4XxR0y1Qb4+JrQozkG6lJ5aPXlOPAW5vfeL4WQ=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <!-- App logic (page-specific) -->
+    <!-- Page-specific JS (e.g., app.js) -->
     {% block extra_js %}{% endblock %}
 </body>
 </html>
