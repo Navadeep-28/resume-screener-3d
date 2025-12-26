@@ -15,6 +15,13 @@ from config import Config
 from src.preprocess import extract_text, preprocess_text, strip_identity_info
 from src.nlp_model import ResumeScreener
 from src.report import generate_pdf_report
+import nltk
+
+try:
+    nltk.data.find("tokenizers/punkt_tab")
+except LookupError:
+    nltk.download("punkt_tab")
+
 
 # ---------- APP SETUP ----------
 
@@ -307,3 +314,4 @@ def download_batch(batch_id):
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
