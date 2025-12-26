@@ -6,7 +6,7 @@
 <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
     <div class="container">
         <a class="navbar-brand fw-bold fs-3" href="#">
-            <i class="fas fa-brain me-2"></i>AI Resume Screener
+            <i class="fas fa-brain me-2"></i>AI Resume Screener 3D
         </a>
         <div class="ms-auto d-flex align-items-center">
             {% if session.get('user') %}
@@ -45,7 +45,7 @@
                         </select>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label text-white fw-bold">Resume File</label>
                         <input type="file"
                                class="form-control bg-transparent text-white border-white"
@@ -55,6 +55,14 @@
                         <div class="form-text text-white-50 small">
                             Only PDF or DOCX files up to 16 MB.
                         </div>
+                    </div>
+
+                    <!-- Blind screening toggle (Idea 2) -->
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" id="blindModeSwitch" name="blind_mode">
+                        <label class="form-check-label text-white-50 small" for="blindModeSwitch">
+                            Blind screening (hide name, contact and institution details while scoring)
+                        </label>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100">
@@ -113,7 +121,7 @@
                             </div>
                         </div>
 
-                        <!-- Explainability panel -->
+                        <!-- Explainability panel (Idea 1) -->
                         <div class="mt-4">
                             <h5 class="text-white mb-3">
                                 <i class="fas fa-question-circle me-2"></i>Why this score?
