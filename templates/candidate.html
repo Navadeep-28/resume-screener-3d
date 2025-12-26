@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div id="three-canvas"></div>
+
+<nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-3" href="{{ url_for('candidate') }}">
+            <i class="fas fa-user-graduate me-2"></i>Resume Coach (Candidate)
+        </a>
+        <div class="ms-auto">
+            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-sm">
+                HR / Admin Login
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5 pt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 mb-4">
+            <div class="card glass-card p-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                    <h3 class="fw-bold text-white mb-1">Get feedback on your resume</h3>
+                    <p class="text-white-50 small mb-0">
+                        Choose a target role, upload your resume, and see how well it matches.
+                    </p>
+                </div>
+
+                {% if error %}
+                <div class="alert alert-danger py-2">{{ error }}</div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label text-white fw-semibold">Target role</label>
+                        <select class="form-select bg-transparent text-white" name="job_category" required>
+                            <option value="">Select Job Role</option>
+                            <option value="data_science"
+                                {% if job_category == 'data_science' %}selected{% endif %}>
+                                Data Scientist
+                            </option>
+                            <option value="software_engineer"
+                                {% if job_category == 'software_engineer' %}selected{% endif %}>
+                                Software Engineer
+                            </option>
+                            <option value="product_manager"
+                                {% if job_category == 'product_manager' %}selected{% endif %}>
+                                Product Manager
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-white fw-semibold">Resume file</label>
+                        <input type="file"
+                               class="form-control bg-transparent text-white border-white"
+                               name="resume"
+                               accept=".pdf,.docx"
+                               required>
+                        <div class="form-text text-white-50 small">
+                            Only PDF or DOCX files up to 16 MB.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-magic me-2"></i>Analyze Resume
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            {% if results %}
+            <div class="card glass-card p-4">
+                <h4 class="text-white mb-3">
+                    Match summary for {{ results.job_category }}
+                </h4>
+
+                <div class="row mb-3">
+                    <div class="col-md-4 text-center">
+                        <div class="score-circle mb-2">
+                            {{ results.overall }}%
+                        </div>
+                        <div class="text-white-50 small">
+                            Overall match score
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <p class="text-white-50 small mb-1">
+                            This score combines how close your resume is to typical
+                            job descriptions (text match), how many required skills you cover,
+                            and a rough estimate of your years of experience.
+                        </p>
+                        <ul class="text-white-50 small mb-0">
+                            <li>Text similarity (TF‑IDF): {{ results.tfidf }}%</li>
+                            <li>Skills match: {{ results.skills }}%</li>
+                            <li>Experience score: {{ results.experience }}%</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Explainability for candidates -->
+                <div class="mt-3">
+                    <h6 class="text-white mb-2">
+                        <i class="fas fa-lightbulb me-2"></i>How to improve your match
+                    </h6>
+
+                    <div class="text-white-50 small mb-2">
+                        <b>Skills we found in your resume:</b>
+                        {% if results.matched_skills %}
+                            {{ results.matched_skills | join(', ') }}
+                        {% else %}
+                            none of the key skills for this role were detected clearly.
+                        {% endif %}
+                    </div>
+
+                    <div class="text-white-50 small mb-2">
+                        <b>Important skills you might highlight more:</b>
+                        {% if results.missing_skills %}
+                            {{ results.missing_skills | join(', ') }}
+                        {% else %}
+                            you already mention most key skills for this role.
+                        {% endif %}
+                    </div>
+
+                    {% if results.explanation %}
+                    <div class="text-white-50 small mb-2">
+                        <b>Top matching phrases from your resume:</b>
+                        {% if results.explanation.top_matching_phrases %}
+                            {{ results.explanation.top_matching_phrases | join(', ') }}
+                        {% else %}
+                            we did not find strong phrase‑level matches to the typical job description.
+                        {% endif %}
+                    </div>
+
+                    <div class="text-white-50 small">
+                        <b>Experience note:</b>
+                        {{ results.explanation.experience_explanation }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <p class="text-white-50 small mt-3 mb-0">
+                    Tip: You don’t need to copy keywords blindly. Use this feedback to describe
+                    your real experience in language similar to the job description.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
