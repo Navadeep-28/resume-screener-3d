@@ -184,6 +184,42 @@ function displayResults(results, pdfUrl) {
             `<b>Missing skills:</b> ${missing}`;
     }
 
+    // Explainability panel
+    const explainTop   = document.getElementById('explainTopPhrases');
+    const explainMiss  = document.getElementById('explainMissingCritical');
+    const explainExp   = document.getElementById('explainExperience');
+
+    const explanation = results.explanation || {};
+
+    if (explainTop) {
+        explainTop.innerHTML = '';
+        (explanation.top_matching_phrases || []).forEach(p => {
+            const li = document.createElement('li');
+            li.textContent = p;
+            explainTop.appendChild(li);
+        });
+        if (!explanation.top_matching_phrases || !explanation.top_matching_phrases.length) {
+            explainTop.innerHTML = '<li>No strong matches detected.</li>';
+        }
+    }
+
+    if (explainMiss) {
+        explainMiss.innerHTML = '';
+        (explanation.missing_critical_skills || []).forEach(s => {
+            const li = document.createElement('li');
+            li.textContent = s;
+            explainMiss.appendChild(li);
+        });
+        if (!explanation.missing_critical_skills || !explanation.missing_critical_skills.length) {
+            explainMiss.innerHTML = '<li>No critical gaps found.</li>';
+        }
+    }
+
+    if (explainExp) {
+        explainExp.textContent = explanation.experience_explanation ||
+            'Experience score is based on extracted years and seniority terms in the resume.';
+    }
+
     createScoreCharts(results);
 }
 
