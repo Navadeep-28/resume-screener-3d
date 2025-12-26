@@ -11,34 +11,46 @@
 
 <div class="container-fluid mt-5">
     <div class="row justify-content-center">
-        <!-- Upload panel -->
+        <!-- Upload panel (ALL Ideas implemented) -->
         <div class="col-lg-4 mb-4">
             <div class="card glass-card shadow-lg p-4">
                 <div class="text-center mb-4">
                     <i class="fas fa-file-upload fa-4x text-primary mb-3"></i>
                     <h2 class="fw-bold text-white">HR Resume Screening</h2>
                     <p class="text-white-50 small mb-0">
-                        Analyze <span class="badge bg-primary">single</span> or <span class="badge bg-success">batch</span> resumes.
+                        <span class="badge bg-primary">Single</span> 
+                        <span class="badge bg-success">Batch</span> 
+                        <span class="badge bg-warning">Compare</span>
+                        <span class="badge bg-info text-white">JD Match</span>
                     </p>
                 </div>
 
                 <form id="uploadForm" enctype="multipart/form-data">
-                    <!-- Batch mode toggle (Idea 4) -->
-                    <div class="form-check form-switch mb-4">
+                    <!-- Idea 4: Batch toggle -->
+                    <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" id="batchModeSwitch" name="batch_mode">
                         <label class="form-check-label text-white" for="batchModeSwitch">
-                            <i class="fas fa-layer-group me-1"></i>Batch Analysis (up to 10 resumes)
+                            <i class="fas fa-layer-group me-1"></i>Batch (up to 10)
                         </label>
                     </div>
 
-                    <!-- IDEA 5: Comparison mode toggle -->
-                    <div class="form-check form-switch mb-4">
+                    <!-- Idea 5: Compare toggle -->
+                    <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" id="compareModeSwitch" name="compare_mode">
                         <label class="form-check-label text-white" for="compareModeSwitch">
-                            <i class="fas fa-balance-scale me-1"></i>Compare Mode (2 resumes)
+                            <i class="fas fa-balance-scale me-1"></i>Compare (2 resumes)
                         </label>
                     </div>
 
+                    <!-- Idea 6: JD Matching toggle -->
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="jdModeSwitch" name="jd_mode">
+                        <label class="form-check-label text-white" for="jdModeSwitch">
+                            <i class="fas fa-briefcase me-1"></i>Job Description Match
+                        </label>
+                    </div>
+
+                    <!-- Job Role -->
                     <div class="mb-3">
                         <label class="form-label text-white fw-bold">Job Role</label>
                         <select class="form-select bg-transparent text-white" name="job_category" required>
@@ -49,57 +61,53 @@
                         </select>
                     </div>
 
-                    <!-- Single resume input -->
-                    <div id="singleResumeInput" class="mb-3">
-                        <label class="form-label text-white fw-bold">Resume File</label>
-                        <input type="file"
-                               class="form-control bg-transparent text-white border-white"
-                               name="resume"
-                               accept=".pdf,.docx"
-                               required>
+                    <!-- Idea 6: Job Description textarea -->
+                    <div id="jdInput" class="mb-3 d-none">
+                        <label class="form-label text-white fw-bold">Job Description</label>
+                        <textarea class="form-control bg-transparent text-white border-white" 
+                                  name="job_description" rows="4" 
+                                  placeholder="Paste the full job description here... (Requirements, skills, experience...)"></textarea>
+                        <div class="form-text text-white-50 small">
+                            Custom JD for precise matching (highly recommended)
+                        </div>
                     </div>
 
-                    <!-- IDEA 5: Comparison inputs (2 files) -->
+                    <!-- Single resume -->
+                    <div id="singleResumeInput" class="mb-3">
+                        <label class="form-label text-white fw-bold">Resume File</label>
+                        <input type="file" class="form-control bg-transparent text-white border-white"
+                               name="resume" accept=".pdf,.docx" required>
+                    </div>
+
+                    <!-- Idea 5: Comparison inputs -->
                     <div id="compareResumeInput" class="mb-3 d-none">
                         <div class="row">
                             <div class="col-6">
-                                <label class="form-label text-white fw-bold">Resume 1</label>
-                                <input type="file"
-                                       class="form-control bg-transparent text-white border-white"
-                                       name="resume1"
-                                       accept=".pdf,.docx"
-                                       required>
+                                <label class="form-label text-white fw-bold small">Resume 1</label>
+                                <input type="file" class="form-control bg-transparent text-white border-white"
+                                       name="resume1" accept=".pdf,.docx">
                             </div>
                             <div class="col-6">
-                                <label class="form-label text-white fw-bold">Resume 2</label>
-                                <input type="file"
-                                       class="form-control bg-transparent text-white border-white"
-                                       name="resume2"
-                                       accept=".pdf,.docx"
-                                       required>
+                                <label class="form-label text-white fw-bold small">Resume 2</label>
+                                <input type="file" class="form-control bg-transparent text-white border-white"
+                                       name="resume2" accept=".pdf,.docx">
                             </div>
-                        </div>
-                        <div class="form-text text-white-50 small mt-2">
-                            Compare two candidates head-to-head.
                         </div>
                     </div>
 
-                    <!-- Batch input (hidden when compare mode) -->
+                    <!-- Idea 4: Batch input -->
                     <div id="batchResumeInput" class="mb-3 d-none">
-                        <label class="form-label text-white fw-bold">Select Multiple Resumes</label>
-                        <input type="file"
-                               class="form-control bg-transparent text-white border-white"
-                               name="resumes"
-                               accept=".pdf,.docx"
-                               multiple>
+                        <label class="form-label text-white fw-bold">Multiple Resumes</label>
+                        <input type="file" class="form-control bg-transparent text-white border-white"
+                               name="resumes" accept=".pdf,.docx" multiple>
                         <div id="batchFileList" class="mt-2 text-white-50 small"></div>
                     </div>
 
-                    <!-- Blind screening toggle -->
+                    <!-- Idea 2: Blind screening -->
                     <div class="form-check form-switch mb-4">
                         <input class="form-check-input" type="checkbox" id="blindModeSwitch" name="blind_mode">
                         <label class="form-check-label text-white-50 small" for="blindModeSwitch">
-                            Blind screening (hide names while scoring)
+                            Blind screening (hide personal info)
                         </label>
                     </div>
 
@@ -111,81 +119,19 @@
             </div>
         </div>
 
-        <!-- Results panel -->
+        <!-- Results panel (simplified - JS handles modes) -->
         <div class="col-lg-8">
-            <!-- Loading state -->
             <div id="loading" class="d-none text-center p-5">
                 <div class="spinner-border text-primary mb-3" role="status" style="width: 4rem; height: 4rem;"></div>
                 <h4 class="text-white" id="loadingText">Analyzing...</h4>
                 <div class="progress mt-3" style="height: 8px;">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%"></div>
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                         role="progressbar" style="width: 0%"></div>
                 </div>
             </div>
 
-            <!-- IDEA 5: Comparison Results -->
-            <div id="compareResults" class="d-none">
-                <div class="card glass-card shadow-lg">
-                    <div class="card-header bg-gradient-warning text-white d-flex justify-content-between">
-                        <h3 class="mb-0">
-                            <i class="fas fa-balance-scale me-2"></i>Head-to-Head Comparison
-                        </h3>
-                        <div>
-                            <span class="badge bg-success fs-6" id="winnerBadge"></span>
-                        </div>
-                    </div>
-                    <div class="card-body p-4">
-                        <!-- Side-by-side comparison -->
-                        <div class="row mb-4">
-                            <div class="col-md-6 text-center">
-                                <div class="score-circle winner-circle mb-3" id="score1">0%</div>
-                                <h5 class="text-white fw-bold" id="candidate1Name">Candidate 1</h5>
-                                <div id="candidate1Skills" class="text-white-50 small"></div>
-                            </div>
-                            <div class="col-md-6 text-center">
-                                <div class="score-circle loser-circle mb-3" id="score2">0%</div>
-                                <h5 class="text-white fw-bold" id="candidate2Name">Candidate 2</h5>
-                                <div id="candidate2Skills" class="text-white-50 small"></div>
-                            </div>
-                        </div>
-
-                        <!-- Comparison charts -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div id="compareBarChart" style="width:100%; height:300px;"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div id="compareRadarChart" style="width:100%; height:300px;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Key differences -->
-                        <div class="mt-4">
-                            <h5 class="text-white mb-3">
-                                <i class="fas fa-list-alt me-2"></i>Key Differences
-                            </h5>
-                            <div id="keyDifferences" class="row text-white-50 small"></div>
-                        </div>
-
-                        <!-- Downloads -->
-                        <div class="mt-4 row">
-                            <div class="col-md-6">
-                                <a id="downloadBtn1" class="btn btn-outline-primary w-100 mb-2" href="#" download>
-                                    <i class="fas fa-file-pdf me-2"></i>Candidate 1 Report
-                                </a>
-                            </div>
-                            <div class="col-md-6">
-                                <a id="downloadBtn2" class="btn btn-outline-primary w-100 mb-2" href="#" download>
-                                    <i class="fas fa-file-pdf me-2"></i>Candidate 2 Report
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Single/Batch results (previous content) -->
-            <div id="singleResult" class="d-none">...</div>
-            <div id="batchResults" class="d-none">...</div>
+            <!-- Results will be populated by JavaScript -->
+            <div id="resultsContainer"></div>
         </div>
     </div>
 </div>
