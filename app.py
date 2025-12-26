@@ -164,6 +164,7 @@ def analyze():
 
         file = request.files['resume']
         job_category = request.form['job_category']
+        
 
         if file.filename == '' or not allowed_file(file.filename):
             return jsonify({'error': 'Invalid file type. Use PDF or DOCX'}), 400
@@ -174,6 +175,30 @@ def analyze():
 
         # Process resume text
         raw_text = extract_text(filepath)
+        # Apply blind screening if enabled
+        from src.preprocess import strip_identity_info
+        if blind_mode:
+            raw_for_scoring = strip_identity_info(raw_text)
+        else:
+            raw_for_scoring = raw_text
+
+        processed_text = preprocess_text(raw_for_scoring)
+        results = screener.score_resume(processed_text, job_category)
+
+        # Indicate to frontend that blind mode was used
+        results['blind_mode'] = blind_mode
+
+        # Generate PDF report on full text (HR may want full version)
+        pdf_name = f"report_{filename.rsplit('.', 1)[0]}_{job_category}"
+        generate_pdf_report(pdf_name, results, raw_text, job_category)
+
+        return jsonify({
+            'success': True,
+            'results': results,
+            'pdf_url': f"/download/{pdf_name}.pdf"
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
         processed_text = preprocess_text(raw_text)
         results = screener.score_resume(processed_text, job_category)
 
@@ -206,3 +231,4 @@ def download(filename):
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
