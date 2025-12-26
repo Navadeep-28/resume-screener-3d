@@ -143,6 +143,49 @@ def logout():
     """Log out current user."""
     session.clear()
     return redirect(url_for('login'))
+@app.route('/candidate', methods=['GET', 'POST'])
+def candidate():
+    """
+    Public candidate feedback page.
+    No login required. Shows score + suggestions, but no PDF download.
+    """
+    if request.method == 'GET':
+        return render_template('candidate.html')
+
+    # POST: handle candidate upload
+    try:
+        if 'resume' not in request.files or 'job_category' not in request.form:
+            return render_template(
+                'candidate.html',
+                error="Please select a role and upload your resume."
+            )
+
+        file = request.files['resume']
+        job_category = request.form['job_category']
+
+        if file.filename == '' or not allowed_file(file.filename):
+            return render_template(
+                'candidate.html',
+                error="Invalid file type. Please upload PDF or DOCX."
+            )
+
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        # Process resume (no blind mode toggle for candidates)
+        raw_text = extract_text(filepath)
+        processed_text = preprocess_text(raw_text)
+        results = screener.score_resume(processed_text, job_category)
+
+        # Candidate mode: mark it and do NOT generate PDF
+        results['candidate_mode'] = True
+
+        return render_template('candidate.html', results=results, job_category=job_category)
+
+    except Exception as e:
+        return render_template('candidate.html', error=str(e))
+
 
 
 # ---------- MAIN APP ROUTES ----------
@@ -231,4 +274,5 @@ def download(filename):
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
