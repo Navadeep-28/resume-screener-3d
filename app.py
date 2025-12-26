@@ -1,7 +1,9 @@
 import os
 import json
 import hashlib
+import zipfile
 from functools import wraps
+from datetime import datetime
 
 from flask import (
     Flask, render_template, request,
@@ -10,7 +12,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from config import Config
-from src.preprocess import extract_text, preprocess_text
+from src.preprocess import extract_text, preprocess_text, strip_identity_info
 from src.nlp_model import ResumeScreener
 from src.report import generate_pdf_report
 
@@ -30,16 +32,13 @@ os.makedirs('data', exist_ok=True)
 screener = ResumeScreener()
 ALLOWED_EXTENSIONS = {'pdf', 'docx'}
 
-
 # ---------- UTILITIES ----------
 
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
 def _users_file_path() -> str:
     return app.config.get('USERS_FILE', 'data/users.json')
-
 
 def _load_users() -> dict:
     """Load users from JSON file."""
@@ -52,7 +51,6 @@ def _load_users() -> dict:
     except json.JSONDecodeError:
         return {}
 
-
 def _save_users(users: dict) -> None:
     """Save users dict to JSON file."""
     path = _users_file_path()
@@ -60,11 +58,9 @@ def _save_users(users: dict) -> None:
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(users, f, indent=2)
 
-
 def _hash_password(password: str) -> str:
     """Very simple hash for demo purposes."""
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
-
 
 def login_required(role: str | None = None):
     """Decorator: require login, and optionally a specific role."""
@@ -78,7 +74,6 @@ def login_required(role: str | None = None):
             return f(*args, **kwargs)
         return wrapper
     return decorator
-
 
 # ---------- AUTH ROUTES ----------
 
@@ -100,7 +95,6 @@ def login():
         return render_template('login.html', error="Invalid username or password")
 
     return render_template('login.html')
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -137,18 +131,15 @@ def register():
 
     return render_template('register.html')
 
-
 @app.route('/logout')
 def logout():
     """Log out current user."""
     session.clear()
     return redirect(url_for('login'))
+
 @app.route('/candidate', methods=['GET', 'POST'])
 def candidate():
-    """
-    Public candidate feedback page.
-    No login required. Shows score + suggestions, but no PDF download.
-    """
+    """Public candidate feedback page. No login required."""
     if request.method == 'GET':
         return render_template('candidate.html')
 
@@ -173,7 +164,7 @@ def candidate():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        # Process resume (no blind mode toggle for candidates)
+        # Process resume (no blind mode for candidates)
         raw_text = extract_text(filepath)
         processed_text = preprocess_text(raw_text)
         results = screener.score_resume(processed_text, job_category)
@@ -186,8 +177,6 @@ def candidate():
     except Exception as e:
         return render_template('candidate.html', error=str(e))
 
-
-
 # ---------- MAIN APP ROUTES ----------
 
 @app.route('/')
@@ -196,83 +185,137 @@ def index():
     """Main dashboard page (upload + charts)."""
     return render_template('index.html')
 
-
 @app.route('/analyze', methods=['POST'])
 @login_required(role='hr')  # only HR can run screening
 def analyze():
-    """Handle resume upload, run NLP scoring, generate PDF."""
+    """Handle single OR batch resume upload, run NLP scoring, generate PDFs."""
     try:
-        if 'resume' not in request.files or 'job_category' not in request.form:
-            return jsonify({'error': 'Missing files or job category'}), 400
+        job_category = request.form.get('job_category')
+        if not job_category:
+            return jsonify({'error': 'Job category required'}), 400
 
-        file = request.files['resume']
-        job_category = request.form['job_category']
-        
+        batch_mode = 'batch_mode' in request.form
+        blind_mode = 'blind_mode' in request.form
 
-        if file.filename == '' or not allowed_file(file.filename):
-            return jsonify({'error': 'Invalid file type. Use PDF or DOCX'}), 400
+        if batch_mode:
+            # **IDEA 4: BATCH PROCESSING**
+            files = request.files.getlist('resumes')
+            if not files or len(files) == 0:
+                return jsonify({'error': 'No files selected'}), 400
+            
+            if len(files) > 10:
+                return jsonify({'error': 'Max 10 files allowed'}), 400
 
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+            results = []
+            pdf_files = []
+            
+            for i, file in enumerate(files):
+                if file.filename == '' or not allowed_file(file.filename):
+                    continue
+                
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
 
-        # Process resume text
-        raw_text = extract_text(filepath)
-        # Apply blind screening if enabled
-        from src.preprocess import strip_identity_info
-        if blind_mode:
-            raw_for_scoring = strip_identity_info(raw_text)
+                # Process each resume
+                raw_text = extract_text(filepath)
+                
+                # Apply blind screening if enabled
+                raw_for_scoring = strip_identity_info(raw_text) if blind_mode else raw_text
+                processed_text = preprocess_text(raw_for_scoring)
+                result = screener.score_resume(processed_text, job_category)
+                
+                # Add filename to result for frontend display
+                result['filename'] = filename
+                result['blind_mode'] = blind_mode
+                
+                # Generate PDF for each (HR needs full reports)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                pdf_name = f"batch_{timestamp}_{i+1}_{filename.rsplit('.', 1)[0]}_{job_category}"
+                generate_pdf_report(pdf_name, result, raw_text, job_category)
+                pdf_files.append(pdf_name + '.pdf')
+                
+                results.append(result)
+
+            # Sort by score for leaderboard
+            results.sort(key=lambda x: x.get('overall_score', 0), reverse=True)
+            
+            return jsonify({
+                'success': True,
+                'batch_results': results,
+                'pdf_files': pdf_files,
+                'total_processed': len([r for r in results if r.get('filename')])
+            })
+
         else:
-            raw_for_scoring = raw_text
+            # SINGLE resume processing
+            if 'resume' not in request.files:
+                return jsonify({'error': 'No resume file'}), 400
 
-        processed_text = preprocess_text(raw_for_scoring)
-        results = screener.score_resume(processed_text, job_category)
+            file = request.files['resume']
+            if file.filename == '' or not allowed_file(file.filename):
+                return jsonify({'error': 'Invalid file type. Use PDF or DOCX'}), 400
 
-        # Indicate to frontend that blind mode was used
-        results['blind_mode'] = blind_mode
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
 
-        # Generate PDF report on full text (HR may want full version)
-        pdf_name = f"report_{filename.rsplit('.', 1)[0]}_{job_category}"
-        generate_pdf_report(pdf_name, results, raw_text, job_category)
+            # Process resume
+            raw_text = extract_text(filepath)
+            
+            # Apply blind screening if enabled
+            raw_for_scoring = strip_identity_info(raw_text) if blind_mode else raw_text
+            processed_text = preprocess_text(raw_for_scoring)
+            results = screener.score_resume(processed_text, job_category)
+            results['blind_mode'] = blind_mode
 
-        return jsonify({
-            'success': True,
-            'results': results,
-            'pdf_url': f"/download/{pdf_name}.pdf"
-        })
+            # Generate PDF report
+            pdf_name = f"report_{filename.rsplit('.', 1)[0]}_{job_category}"
+            generate_pdf_report(pdf_name, results, raw_text, job_category)
+
+            return jsonify({
+                'success': True,
+                'results': results,
+                'pdf_url': f"/download/{pdf_name}.pdf"
+            })
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-        processed_text = preprocess_text(raw_text)
-        results = screener.score_resume(processed_text, job_category)
-
-        # Generate PDF report
-        pdf_name = f"report_{filename.rsplit('.', 1)[0]}_{job_category}"
-        generate_pdf_report(pdf_name, results, raw_text, job_category)
-
-        return jsonify({
-            'success': True,
-            'results': results,
-            'pdf_url': f"/download/{pdf_name}.pdf"
-        })
-
-    except Exception as e:
-        # In debug mode, full traceback will appear in terminal
-        return jsonify({'error': str(e)}), 500
-
 
 @app.route('/download/<filename>')
-@login_required()   # only logged-in users can download
+@login_required()
 def download(filename):
-    """Download generated PDF report."""
+    """Download single generated PDF report."""
     filepath = os.path.join('outputs', filename)
     if os.path.exists(filepath):
         return send_file(filepath, as_attachment=True)
     return jsonify({'error': 'File not found'}), 404
 
+@app.route('/download-batch/<batch_id>')
+@login_required()
+def download_batch(batch_id):
+    """Download all PDFs from a batch as ZIP."""
+    try:
+        # Find all PDF files for this batch
+        batch_files = [f for f in os.listdir('outputs') 
+                      if f.startswith(f'batch_{batch_id}') and f.endswith('.pdf')]
+        
+        if not batch_files:
+            return jsonify({'error': 'No batch files found'}), 404
+        
+        zip_path = os.path.join('outputs', f'{batch_id}.zip')
+        
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            for pdf_file in batch_files:
+                pdf_path = os.path.join('outputs', pdf_file)
+                zipf.write(pdf_path, pdf_file)
+        
+        return send_file(zip_path, as_attachment=True, download_name=f'{batch_id}.zip')
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ---------- ENTRY POINT ----------
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-
-
