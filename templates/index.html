@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Resume Screener - NLP Powered</title>
+    <title>AI Resume Screener</title>
 
     <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -23,12 +23,12 @@
 <!-- ================= NAVBAR ================= -->
 <nav class="navbar glass-card">
     <div class="nav-left">
-        <span class="brand">🚀 AI Resume Screener</span>
+        <span class="brand">AI Resume Screener</span>
     </div>
 
     <div class="nav-right">
         <span class="user-info">
-            👤 {{ session.user }}
+            {{ session.user }}
             {% if session.role == "admin" %}
                 <span class="badge">ADMIN</span>
             {% else %}
@@ -43,101 +43,144 @@
 <!-- 3D Background -->
 <canvas id="three-canvas"></canvas>
 
+<!-- ================= MAIN CONTAINER ================= -->
 <div class="container">
-    <h1>🚀 AI Resume Screener</h1>
-    <p>Upload PDF + Job Role → NLP Scoring + Explainability</p>
+
+    <!-- ================= HEADER ================= -->
+    <header class="page-header">
+        <h1>AI Resume Screener</h1>
+        <p>Upload a resume and evaluate it using NLP-based job matching</p>
+    </header>
 
     <!-- ================= FORM ================= -->
-    <form id="upload-form" method="POST" enctype="multipart/form-data">
+    <form id="upload-form" method="POST" enctype="multipart/form-data" class="glass-card form-card">
 
-        <!-- Resume -->
-        <input type="file" name="resume" accept=".pdf" required>
+        <!-- Resume Upload -->
+        <div class="form-group">
+            <label class="field-label">
+                <svg viewBox="0 0 24 24" class="icon">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                </svg>
+                Resume (PDF)
+            </label>
+            <input type="file" name="resume" accept=".pdf" required>
+        </div>
 
-        <!-- Job Role Dropdown -->
-        <select name="job_role" id="job-role">
-            <option value="">🎯 Select Job Role (Optional)</option>
-            {% for key, jd in job_templates.items() %}
-                <option value="{{ key }}">{{ key.replace('_',' ').title() }}</option>
-            {% endfor %}
-        </select>
+        <!-- Job Role -->
+        <div class="form-group">
+            <label class="field-label">
+                <svg viewBox="0 0 24 24" class="icon">
+                    <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5z"/>
+                    <path d="M4 22c0-4 4-6 8-6s8 2 8 6"/>
+                </svg>
+                Job Role
+            </label>
+            <select name="job_role" id="job-role">
+                <option value="">Select a job role (optional)</option>
+                {% for key, jd in job_templates.items() %}
+                    <option value="{{ key }}">{{ key.replace('_',' ').title() }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
         <!-- Job Description -->
-        <textarea
-            name="job_desc"
-            id="job-desc"
-            placeholder="Job description (auto-filled when role is selected)"
-            rows="4"
-        >{{ job_desc if job_desc else '' }}</textarea>
+        <div class="form-group">
+            <label class="field-label">
+                <svg viewBox="0 0 24 24" class="icon">
+                    <path d="M4 4h16v16H4z"/>
+                    <path d="M8 8h8M8 12h8M8 16h5"/>
+                </svg>
+                Job Description
+            </label>
+            <textarea
+                name="job_desc"
+                id="job-desc"
+                placeholder="Job description (auto-filled when role is selected)"
+                rows="5"
+            >{{ job_desc if job_desc else '' }}</textarea>
+        </div>
 
-        <button type="submit">🔍 Analyze Resume</button>
+        <!-- Submit -->
+        <button type="submit" class="primary-btn">
+            Analyze Resume
+        </button>
     </form>
 
     <!-- Spinner -->
     <div id="spinner" class="spinner" style="display:none;">
-        🔄 AI Analyzing<span class="dots"></span>
+        Analyzing resume…
     </div>
 
     <!-- Error -->
     {% if error %}
-    <div class="error">❌ {{ error }}</div>
+        <div class="error">{{ error }}</div>
     {% endif %}
 
     <!-- ================= RESULTS ================= -->
     {% if success %}
-    <div class="results glass-card">
-        <h2>
-            ✅ Final Score:
+    <section class="results glass-card">
+
+        <div class="score-header">
+            <h2>Final Score</h2>
             <span id="final-score">{{ "%.1f"|format(score * 100) }}%</span>
-        </h2>
+        </div>
 
         <div class="scores">
-            <div>📊 Quality: {{ "%.1f"|format(quality * 100) }}%</div>
-            <div>🎯 Job Match: {{ "%.1f"|format(match * 100) }}%</div>
+            <div class="score-box">
+                <span class="score-title">Quality</span>
+                <span>{{ "%.1f"|format(quality * 100) }}%</span>
+            </div>
+            <div class="score-box">
+                <span class="score-title">Job Match</span>
+                <span>{{ "%.1f"|format(match * 100) }}%</span>
+            </div>
         </div>
 
         <!-- Skills Chart -->
         <div id="skills-chart" class="chart-container"></div>
 
-        <!-- Skills -->
+        <!-- Top Skills -->
         <div class="skills-list">
             <h3>Top Skills</h3>
             <ul>
                 {% for skill in top_skills[:5] %}
-                <li>{{ skill.name }} ({{ "%.0f"|format(skill.score * 100) }}%)</li>
+                    <li>{{ skill.name }} ({{ "%.0f"|format(skill.score * 100) }}%)</li>
                 {% endfor %}
             </ul>
         </div>
 
-        <!-- ================= HEATMAP ================= -->
+        <!-- Heatmap -->
         {% if heatmap %}
-<div class="heatmap glass-card">
-    <h3>🔥 Resume ↔ Job Description Match</h3>
-    <div class="heatmap-words">
-        {% for word in heatmap %}
-            <span class="heat-word">{{ word }}</span>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
+        <div class="heatmap glass-card">
+            <h3>Resume ↔ Job Description Match</h3>
+            <div class="heatmap-words">
+                {% for word in heatmap %}
+                    <span class="heat-word">{{ word }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Preview -->
         <div class="preview">
-            <h3>📄 Resume Preview</h3>
+            <h3>Resume Preview</h3>
             <p>{{ preview }}</p>
         </div>
 
-        <!-- Download -->
-        <a href="/download/{{ report }}" class="download-btn">
-            📥 Download PDF Report
-        </a>
+        <!-- Actions -->
+        <div class="actions">
+            <a href="/download/{{ report }}" class="download-btn">
+                Download PDF Report
+            </a>
 
-        <button type="button" class="clear-btn" onclick="location.reload()">
-            🔄 New Analysis
-        </button>
-    </div>
+            <button type="button" class="clear-btn" onclick="location.reload()">
+                New Analysis
+            </button>
+        </div>
 
-    <!-- Auto-render chart -->
+    </section>
+
     <script>
         if (typeof renderSkillsChart === "function") {
             renderSkillsChart();
@@ -148,17 +191,14 @@
     <!-- Status -->
     <div class="status">
         Models:
-        {% if success %}
-            ✅ Loaded
-        {% else %}
-            ⚠️ Not trained
-        {% endif %}
+        {% if success %} Loaded {% else %} Not trained {% endif %}
     </div>
+
 </div>
 
 <!-- ================= JD AUTO-FILL ================= -->
 <script>
-    const templates = {{ job_templates|tojson }};
+    const templates = {{ job_templates | tojson }};
     const roleSelect = document.getElementById("job-role");
     const jdBox = document.getElementById("job-desc");
 
