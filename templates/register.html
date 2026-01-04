@@ -4,42 +4,83 @@
     <meta charset="UTF-8">
     <title>Register | AI Resume Screener</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body class="auth-page">
 
-
+<!-- 3D Background -->
 <canvas id="three-canvas"></canvas>
 
+<!-- ================= AUTH CONTAINER ================= -->
 <div class="auth-container glass-card">
-    <h2>📝 Register</h2>
-    <p>Create HR or Admin account</p>
 
+    <!-- ===== HEADER ===== -->
+    <div class="auth-header">
+        <div class="auth-icon register">
+            <!-- USER PLUS SVG ICON -->
+            <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="4"
+                        stroke="currentColor" stroke-width="2"/>
+                <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"
+                      stroke="currentColor" stroke-width="2"/>
+                <path d="M19 8v4M17 10h4"
+                      stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <h2 class="auth-title">Register</h2>
+        <p class="auth-subtitle">Create HR or Admin account</p>
+    </div>
+
+    <!-- ===== ERROR ===== -->
     {% if error %}
-        <div class="error">❌ {{ error }}</div>
+        <div class="error">{{ error }}</div>
     {% endif %}
 
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required>
+    <!-- ===== FORM ===== -->
+    <form method="POST" class="auth-form">
 
-        <input type="password" name="password" placeholder="Password" required>
+        <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            required
+        >
 
-        <!-- Optional role -->
+        <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+        >
+
+        <!-- Role Selection -->
         <select name="role">
             <option value="">HR (Default)</option>
             <option value="admin">Admin</option>
         </select>
 
-        <button type="submit">Create Account</button>
+        <button type="submit">
+            Create Account
+        </button>
     </form>
 
+    <!-- ===== FOOTER ===== -->
     <div class="auth-footer">
-        <p>Already registered?
+        <p>
+            Already registered?
             <a href="{{ url_for('login') }}">Login</a>
         </p>
     </div>
+
 </div>
 
+<!-- JS -->
 <script src="{{ url_for('static', filename='script.js') }}"></script>
+
 </body>
 </html>
