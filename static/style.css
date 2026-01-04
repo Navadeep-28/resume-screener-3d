@@ -159,6 +159,68 @@ body:not(.auth-page) {
     animation: authPop 0.7s ease;
 }
 
+/* ================= AUTH HEADER ================= */
+.auth-header {
+    text-align: center;
+    margin-bottom: 32px;
+    position: relative;
+}
+
+/* ICON CONTAINER */
+.auth-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 12px;
+    border-radius: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: linear-gradient(135deg, #00e6ff, #667eea);
+    box-shadow:
+        0 10px 30px rgba(0, 230, 255, 0.4),
+        inset 0 0 12px rgba(255, 255, 255, 0.3);
+
+    transform: perspective(600px) rotateX(10deg);
+}
+
+/* SVG ICON */
+.auth-icon svg {
+    width: 30px;
+    height: 30px;
+    color: #0b0318;
+}
+
+/* TITLE */
+.auth-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+
+    background: linear-gradient(135deg, #00e6ff, #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    text-shadow: 0 4px 20px rgba(0, 230, 255, 0.35);
+}
+
+/* SUBTITLE */
+.auth-subtitle {
+    font-size: 1rem;
+    opacity: 0.85;
+    color: #cfd6ff;
+}
+
+/* SUBTLE HOVER EFFECT */
+.auth-header:hover .auth-icon {
+    transform: perspective(600px) rotateX(0deg) translateY(-2px);
+    box-shadow:
+        0 15px 40px rgba(0, 230, 255, 0.6),
+        inset 0 0 16px rgba(255, 255, 255, 0.35);
+}
+
+
 /* ======================================================
    HEADINGS
 ====================================================== */
@@ -229,42 +291,96 @@ button:hover {
    RESULTS CARD
 ====================================================== */
 .results {
-    margin-top: 28px;
-    animation: rise 0.7s ease forwards;
+    margin-top: 42px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px; /* controls vertical rhythm */
+}
+
+.score-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.score-header h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-muted);
 }
 
 #final-score {
-    font-size: 3.2rem;
-    font-weight: 800;
+    font-size: 3.6rem;
+    font-weight: 900;
+    line-height: 1;
     background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
+/* ================= SCORE BOXES ================= */
+.scores {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.score-box {
+    padding: 20px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.08);
+    text-align: center;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+
+.score-title {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.score-box span:last-child {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+
 /* ======================================================
    SKILLS & CHART
 ====================================================== */
 .chart-container {
+    margin-top: 10px;
+    padding: 18px;
+    background: rgba(0,0,0,0.35);
     height: 320px;
     margin: 26px 0;
-    border-radius: 18px;
+    border-radius: 20px;
     overflow: hidden;
 }
 
 .skill-list{
-    margin-top: 28px;
+    margin-top: 10px;
+}
+
+.skills-list h3 {
+    margin-bottom: 14px;
 }
 
 .skills-list ul {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 12px;
 }
 
 .skills-list li {
     padding: 10px 18px;
-    font-size: 0.9rem
+    font-size: 0.9rem;
     border-radius: 999px;
     background: linear-gradient(
         135deg,
@@ -278,7 +394,7 @@ button:hover {
    HEATMAP WORDS
 ====================================================== */
 .heatmap {
-    margin-top: 36px;
+    margin-top: 10px;
     padding: 26px 28px;
 }
 
@@ -322,11 +438,11 @@ button:hover {
 }
 
 .preview h3 {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .preview p {
-    line-height: 1.7;
+    line-height: 1.8;
     font-size: 0.95rem;
 }
 
@@ -370,6 +486,26 @@ button:hover {
     filter: brightness(1);
 }
 
+.actions {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;   
+    gap: 18px;
+}
+
+/* Download button stays centered */
+.actions .download-btn {
+    min-width: 260px;
+    text-align: center;
+}
+
+/* New Analysis button spans wider (visual hierarchy) */
+.actions .clear-btn {
+    width: 100%;
+    max-width: 420px;
+}
+
 /* ======================================================
    FEEDBACK
 ====================================================== */
@@ -385,6 +521,78 @@ button:hover {
     padding: 16px;
     border-radius: 14px;
     text-align: center;
+}
+
+/* ======================================================
+   FORM LAYOUT FIX (SPACING & RHYTHM)
+====================================================== */
+.form-card {
+    padding: 36px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;              /* space between label & field */
+    margin-bottom: 28px;   /* space between sections */
+}
+
+/* Remove double spacing from inputs */
+.form-group input,
+.form-group textarea,
+.form-group select {
+    margin-bottom: 0;
+}
+
+/* ======================================================
+   SVG ICONS (FOR INDEX.HTML HEADERS)
+====================================================== */
+.field-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+/* SVG icon base */
+.field-label .icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    stroke: var(--neon-blue);
+    fill: none;
+    stroke-width: 1.8;
+    opacity: 0.9;
+}
+
+/* Glow on focus */
+.form-group:focus-within .field-label .icon {
+    stroke: var(--neon-green);
+    filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
+}
+
+/* ======================================================
+   PAGE HEADER SPACING
+====================================================== */
+.page-header {
+    margin-bottom: 46px;
+}
+
+.page-header h1 {
+    margin-bottom: 10px;
+}
+
+.page-header p {
+    margin-bottom: 0;
+}
+.actions {
+    margin-top: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
 }
 
 /* ======================================================
@@ -417,8 +625,17 @@ button:hover {
    RESPONSIVE
 ====================================================== */
 @media (max-width: 768px) {
-    .container,
-    .auth-container {
-        padding: 26px;
+    .scores {
+        grid-template-columns: 1fr;
+    }
+
+    .score-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #final-score {
+        font-size: 3rem;
     }
 }
+
