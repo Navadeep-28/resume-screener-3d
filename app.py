@@ -85,6 +85,91 @@ def authenticate_user(username, password):
 def login_required():
     return "user" in session
 
+# ================= ATS DECISION LOGIC =================
+
+PASS_THRESHOLD = 0.70      # overall
+MATCH_THRESHOLD = 0.60     # job relevance
+QUALITY_THRESHOLD = 0.65   # resume quality
+
+def ats_decision(final, quality, match):
+    if final >= PASS_THRESHOLD and match >= MATCH_THRESHOLD:
+        return "PASS"
+    return "FAIL"
+
+def decision_reason(decision, quality, match):
+    """Generate human-readable reason for the decision"""
+    if decision == "PASS":
+        return "The candidate's resume meets the required standards for this position."
+    else:
+        reasons = []
+        if quality < QUALITY_THRESHOLD:
+            reasons.append("resume quality")
+        if match < MATCH_THRESHOLD:
+            reasons.append("job relevance")
+        
+        if reasons:
+            return f"The candidate did not meet requirements in: {', '.join(reasons)}."
+        return "The overall score did not meet the hiring benchmark."
+
+def calculate_confidence(final, quality, match):
+    """Calculate confidence score based on how far from thresholds"""
+    # Higher confidence when scores are far from decision boundaries
+    quality_distance = abs(quality - QUALITY_THRESHOLD)
+    match_distance = abs(match - MATCH_THRESHOLD)
+    final_distance = abs(final - PASS_THRESHOLD)
+    
+    # Average distance from thresholds (normalized)
+    confidence = (quality_distance + match_distance + final_distance) / 3
+    # Scale to 0.5-1.0 range (minimum 50% confidence)
+    confidence = min(0.5 + confidence, 1.0)
+    
+    return confidence
+
+def failure_reasons(quality, match):
+    reasons = []
+
+    if quality < QUALITY_THRESHOLD:
+        reasons.append("Resume quality is below the expected standard")
+
+    if match < MATCH_THRESHOLD:
+        reasons.append("Job description relevance is low")
+
+    if not reasons:
+        reasons.append("Overall score did not meet hiring benchmark")
+
+    return reasons
+
+def skill_gap_analysis(resume_text, job_desc):
+    resume_skills = extract_keywords(resume_text)
+    job_skills = extract_keywords(job_desc)
+
+    missing = sorted(list(job_skills - resume_skills))
+    matched = sorted(list(job_skills & resume_skills))
+
+    return matched[:10], missing[:10]
+
+def improvement_tips(missing_skills):
+    tips = []
+    for skill in missing_skills[:5]:
+        tips.append(f"Add hands-on experience or projects related to '{skill}'")
+
+    if not tips:
+        tips.append("Resume is strong — consider optimizing formatting and clarity")
+
+    return tips
+
+def ai_explanation(final, quality, match, decision):
+    if decision == "PASS":
+        return (
+            "The resume demonstrates strong alignment with the job role, "
+            "showing both relevant skills and acceptable resume quality."
+        )
+    return (
+        "The resume does not sufficiently match the job requirements. "
+        "Improving relevance and skill alignment can significantly increase chances."
+    )
+
+
 # ================= LOAD MODELS =================
 try:
     tfidf_general = joblib.load("models/tfidf_general.pkl")
@@ -128,6 +213,29 @@ def register():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+@app.route("/clear")
+def clear():
+    """Clear results and start new analysis"""
+    if 'last_result' in session:
+        del session['last_result']
+    return redirect(url_for("index"))
+
+# ================= RESULTS ROUTE =================
+@app.route("/results")
+def results():
+    if not login_required():
+        return redirect(url_for("login"))
+    
+    result_data = session.get('last_result')
+    if not result_data:
+        return redirect(url_for("index"))
+    
+    return render_template(
+        "index.html",
+        job_templates=JOB_TEMPLATES,
+        **result_data
+    )
 
 # ================= MAIN APP =================
 @app.route("/", methods=["GET", "POST"])
@@ -188,6 +296,67 @@ def index():
         )[0]
 
         final = 0.6 * q + 0.4 * m
+        
+        # ================= ENHANCED FEATURES =================
+        # Calculate keyword-based metrics
+        resume_keywords = extract_keywords(text)
+        jd_keywords = extract_keywords(job_desc)
+        common_skills = resume_keywords.intersection(jd_keywords)
+        jd_coverage = round(len(common_skills) / max(len(jd_keywords), 1) * 100, 2)
+        
+        # Determine status with configurable threshold
+        PASS_THRESHOLD_CONFIG = 0.65
+        status = "PASS" if final >= PASS_THRESHOLD_CONFIG else "FAIL"
+        
+        # Enhanced failure reasons with detailed criteria
+        enhanced_failure_reasons = []
+        if q < 0.5:
+            enhanced_failure_reasons.append("Low resume quality (format, clarity, or structure issues)")
+        if m < 0.6:
+            enhanced_failure_reasons.append("Poor alignment with the job description")
+        if jd_coverage < 50:
+            enhanced_failure_reasons.append("More than half of the required skills are missing")
+        if len(common_skills) < 5:
+            enhanced_failure_reasons.append("Insufficient relevant skills detected for this role")
+        if status == "PASS":
+            enhanced_failure_reasons = []
+        
+        # Calculate hiring risk
+        if final >= 0.8 and jd_coverage >= 70:
+            hiring_risk = "LOW"
+        elif final >= 0.6 and jd_coverage >= 50:
+            hiring_risk = "MEDIUM"
+        else:
+            hiring_risk = "HIGH"
+        
+        # Explainability module for AI transparency
+        explainability = {
+            "quality_explanation": (
+                "Resume shows strong structure and clarity"
+                if q >= 0.7 else
+                "Resume structure or clarity needs improvement"
+            ),
+            "match_explanation": (
+                "Resume aligns well with the job role"
+                if m >= 0.7 else
+                "Resume does not sufficiently match the job requirements"
+            ),
+            "coverage_explanation": f"{jd_coverage}% of job description skills were found in the resume",
+            "decision_explanation": (
+                "Candidate meets the minimum criteria for this role"
+                if status == "PASS"
+                else "Candidate does not meet the minimum criteria for this role"
+            )
+        }
+        
+        # Keep existing features
+        decision = ats_decision(final, q, m)
+        reasons = failure_reasons(q, m)
+        matched_skills, missing_skills = skill_gap_analysis(text, job_desc)
+        recommendations = improvement_tips(missing_skills)
+        explanation = ai_explanation(final, q, m, decision)
+        confidence = calculate_confidence(final, q, m)
+        decision_text = decision_reason(decision, q, m)
 
         resume_vec = tfidf_general.transform([clean_resume])
         skills_vec = tfidf_general.transform(skills_list)
@@ -211,26 +380,46 @@ def index():
         doc.build([
             Paragraph("AI Resume Screening Report", styles["Title"]),
             Spacer(1, 12),
+            Paragraph(f"Decision: {decision}", styles["Normal"]),
+            Paragraph(f"Status: {status}", styles["Normal"]),
+            Paragraph(f"Confidence: {confidence:.1%}", styles["Normal"]),
+            Spacer(1, 12),
             Paragraph(f"Final Score: {final:.1%}", styles["Normal"]),
             Paragraph(f"Quality Score: {q:.1%}", styles["Normal"]),
             Paragraph(f"Job Match Score: {m:.1%}", styles["Normal"]),
+            Paragraph(f"JD Coverage: {jd_coverage}%", styles["Normal"]),
+            Paragraph(f"Hiring Risk: {hiring_risk}", styles["Normal"]),
         ])
 
         os.remove(path)
 
-        return render_template(
-    "index.html",
-    success=True,
-    score=final,
-    quality=q,
-    match=m,
-    top_skills=top_skills,
-    report="report.pdf",
-    preview=text[:500] + "...",
-    job_templates=JOB_TEMPLATES,
-    heatmap=heatmap_words   # ✅ PYTHON LIST
-)
-
+        # Store results in session to enable proper redirect
+        session['last_result'] = {
+            'success': True,
+            'score': final,
+            'quality': q,
+            'match': m,
+            'decision': decision,
+            'decision_reason': decision_text,
+            'confidence': confidence,
+            'reasons': reasons,
+            'matched_skills': matched_skills,
+            'missing_skills': missing_skills,
+            'recommendations': recommendations,
+            'explanation': explanation,
+            'top_skills': top_skills,
+            'report': "report.pdf",
+            'preview': text[:500] + "...",
+            'heatmap': heatmap_words,
+            # Enhanced features
+            'status': status,
+            'jd_coverage': jd_coverage,
+            'hiring_risk': hiring_risk,
+            'failure_reasons_enhanced': enhanced_failure_reasons,
+            'explainability': explainability
+        }
+        
+        return redirect(url_for('results'))
 
     return render_template(
         "index.html",
