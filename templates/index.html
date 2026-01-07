@@ -109,58 +109,73 @@
 
     <!-- ================= RESULTS ================= -->
     {% if success %}
-    <section class="results glass-card">
-
-        <!-- ===== NEW: DECISION BADGE ===== -->
-        <div class="decision-badge {{ 'pass' if status == 'PASS' else 'fail' }}">
-            {{ status }}
-        </div>
-
-        <!-- ===== PASS / FAIL DECISION ===== -->
-        <div class="decision-box {{ decision|lower }}">
-            <h2>
-                {% if decision == "PASS" %}
-                    ✅ Candidate Passed
-                {% else %}
-                    ❌ Candidate Failed
-                {% endif %}
-            </h2>
-            <p>{{ decision_reason }}</p>
-            <span class="confidence">
-                ATS Confidence: {{ "%.0f"|format(confidence * 100) }}%
-            </span>
-        </div>
-
-        <!-- ===== NEW: METRIC CARDS ===== -->
-        <div class="metric-card">
-            <h3>JD Coverage</h3>
-            <p>{{ jd_coverage }}%</p>
-        </div>
-        <div class="metric-card risk {{ hiring_risk|lower }}">
-            <h3>Hiring Risk</h3>
-            <p>{{ hiring_risk }}</p>
-        </div>
-
-        <!-- ===== SCORE SUMMARY ===== -->
-        <div class="score-header">
-            <h2>Final Score</h2>
-            <span id="final-score">{{ "%.1f"|format(score * 100) }}%</span>
-        </div>
-
-        <div class="scores">
-            <div class="score-box">
-                <span>Quality</span>
-                <strong>{{ "%.1f"|format(quality * 100) }}%</strong>
+    
+    <!-- NEW LANDSCAPE LAYOUT -->
+    <section class="results glass-card result-landscape">
+        <!-- LEFT: PASS / FAIL -->
+        <div class="result-col status-col">
+            <div class="status-pill {{ 'pass' if status == 'PASS' else 'fail' }}">
+                {{ status }}
             </div>
-            <div class="score-box">
-                <span>Job Match</span>
-                <strong>{{ "%.1f"|format(match * 100) }}%</strong>
+            <div class="status-card">
+                <h3 class="status-title">
+                    {% if decision == "PASS" %}
+                        ✅ Candidate Passed
+                    {% else %}
+                        ❌ Candidate Failed
+                    {% endif %}
+                </h3>
+                <p class="status-text">
+                    {{ decision_reason }}
+                </p>
+                <span class="confidence-chip">
+                    ATS Confidence: {{ "%.0f"|format(confidence * 100) }}%
+                </span>
             </div>
         </div>
+        
+        <!-- CENTER: JD + RISK -->
+        <div class="result-col metrics-col">
+            <div class="metric-card">
+                <span class="metric-label">JD Coverage</span>
+                <span class="metric-value blue">
+                    {{ jd_coverage if jd_coverage else "%.1f"|format(match * 100) }}%
+                </span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Hiring Risk</span>
+                <span class="metric-value {{ 'danger' if match < 0.4 else ('warning' if match < 0.7 else 'success') }}">
+                    {% if hiring_risk %}
+                        {{ hiring_risk }}
+                    {% else %}
+                        {% if match < 0.4 %}HIGH{% elif match < 0.7 %}MEDIUM{% else %}LOW{% endif %}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- RIGHT: SCORES -->
+        <div class="result-col score-col">
+            <div class="final-score">
+                <span>Final Score</span>
+                <h2 id="final-score">{{ "%.1f"|format(score * 100) }}%</h2>
+            </div>
+            <div class="mini-scores">
+                <div class="mini-card">
+                    Quality<br>
+                    <strong>{{ "%.1f"|format(quality * 100) }}%</strong>
+                </div>
+                <div class="mini-card">
+                    Job Match<br>
+                    <strong>{{ "%.1f"|format(match * 100) }}%</strong>
+                </div>
+            </div>
+        </div>
+    </section>
 
         <!-- ===== NEW: FAILURE REASONS ===== -->
         {% if status == "FAIL" and failure_reasons %}
-        <div class="failure-box">
+        <div class="failure-box glass-card">
             <h3>Why this resume failed</h3>
             <ul>
                 {% for reason in failure_reasons %}
@@ -172,7 +187,7 @@
 
         <!-- ===== NEW: AI EXPLANATION ===== -->
         {% if explainability %}
-        <div class="explain-box">
+        <div class="explain-box glass-card">
             <h3>AI Decision Explanation</h3>
             <p><strong>Resume Quality:</strong> {{ explainability.quality_explanation }}</p>
             <p><strong>Job Match:</strong> {{ explainability.match_explanation }}</p>
@@ -182,7 +197,7 @@
         {% endif %}
 
         <!-- ===== SKILLS ===== -->
-        <div class="skills-list">
+        <div class="skills-list glass-card">
             <h3>Matched Skills</h3>
             <ul>
                 {% for skill in top_skills[:5] %}
@@ -193,7 +208,7 @@
 
         <!-- ===== SKILL GAPS ===== -->
         {% if missing_skills %}
-        <div class="gap-box">
+        <div class="gap-box glass-card">
             <h3>Missing Skills</h3>
             <ul>
                 {% for skill in missing_skills %}
@@ -205,7 +220,7 @@
 
         <!-- ===== RECOMMENDATIONS ===== -->
         {% if recommendations %}
-        <div class="recommendations">
+        <div class="recommendations glass-card">
             <h3>Improvement Suggestions</h3>
             <ul>
                 {% for tip in recommendations %}
@@ -228,18 +243,17 @@
         {% endif %}
 
         <!-- ===== PREVIEW ===== -->
-        <div class="preview">
+        <div class="preview glass-card">
             <h3>Resume Preview</h3>
             <p>{{ preview }}</p>
         </div>
 
         <!-- ===== ACTIONS ===== -->
-        <div class="actions" style="text-align:center">
+        <div class="actions" style="text-align:center; margin-top: 2rem;">
             <a href="/download/{{ report }}" class="download-btn">Download Report</a>
             <a href="{{ url_for('clear') }}" class="clear-btn">New Analysis</a>
         </div>
 
-    </section>
     {% endif %}
 
 </div>
