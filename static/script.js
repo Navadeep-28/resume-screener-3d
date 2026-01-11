@@ -1,3 +1,6 @@
+// ================= IMPORT THREE.JS =================
+import * as THREE from 'three';
+
 // ================= DYNAMIC RESUME SCREENER =================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -56,7 +59,7 @@ function initJobTemplates() {
 /* ================= 3D BACKGROUND ================= */
 function init3DCanvas() {
     const canvas = document.getElementById("three-canvas");
-    if (!canvas || !window.THREE) return;
+    if (!canvas) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
