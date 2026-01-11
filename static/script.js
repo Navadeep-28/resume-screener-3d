@@ -90,9 +90,10 @@ function init3DCanvas() {
 
     const material = new THREE.PointsMaterial({
         color: 0x00e6ff,
-        size: 0.008,
+        size: 0.05,  // Increased from 0.008 - try values between 0.01 and 0.1
         transparent: true,
-        opacity: 0.6
+        opacity: 0.8
+        sizeAttenuation: true
     });
 
     const particleSystem = new THREE.Points(particles, material);
