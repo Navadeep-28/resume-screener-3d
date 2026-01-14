@@ -2,7 +2,7 @@
 // ================= RESUME COMPARISON (ES MODULE) =================
 
 export function initResumeComparison() {
-    const compareForm = document.querySelector('form[action="/compare-resumes"]');
+    const compareForm = document.querySelector('form[action="/compare_resumes"]');
     if (!compareForm) return;
 
     compareForm.addEventListener("submit", async (e) => {
@@ -11,7 +11,7 @@ export function initResumeComparison() {
         const formData = new FormData(compareForm);
 
         try {
-            const res = await fetch("/compare-resumes", {
+            const res = await fetch("/compare_resumes", {
                 method: "POST",
                 body: formData
             });
@@ -19,7 +19,7 @@ export function initResumeComparison() {
             const data = await res.json();
 
             const html = `
-                <div class="glass-card" id="compare-results">
+                <div class="glass-card" id="compare_results">
                     <h3>🏆 Better Resume: ${data.winner.replace("_", " ").toUpperCase()}</h3>
 
                     <table style="width:100%; margin-top:1rem;">
@@ -47,7 +47,7 @@ export function initResumeComparison() {
                 </div>
             `;
 
-            const existing = document.getElementById("compare-results");
+            const existing = document.getElementById("compare_results");
             if (existing) existing.remove();
 
             compareForm.parentElement.insertAdjacentHTML("beforeend", html);
