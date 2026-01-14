@@ -115,6 +115,7 @@ function init3DCanvas() {
     });
 }
 
+
 /* ================= FORM SUBMISSION ================= */
 function initForm() {
     const form = document.getElementById("upload-form");
@@ -123,6 +124,15 @@ function initForm() {
 
     if (!form || !spinner || !container) return;
 
+    // 🔑 Detect screening mode from form attribute
+    const mode = form.getAttribute("data-mode") || "single";
+
+    // ✅ Allow normal submit for batch & compare
+    if (mode !== "single") {
+        return;
+    }
+
+    // ✅ AJAX ONLY for single resume screening
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -169,6 +179,7 @@ function initForm() {
         }
     });
 }
+
 
 /* ================= SKILLS CHART ================= */
 function renderSkillsChart() {
@@ -232,4 +243,5 @@ function initSpinnerDots() {
         dots.textContent = ".".repeat(step);
     }, 300);
 }
+
 
