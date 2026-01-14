@@ -67,16 +67,9 @@ match_scores = [
     for r, j in zip(df["clean_resume"], df["clean_jd"])
 ]
 
-X_match = tfidf_match.transform(df["clean_resume"] + " " + df["clean_jd"])
-Xm_tr, Xm_te, ym_tr, ym_te = train_test_split(X_match, match_scores, test_size=0.2)
-
-model_match = RandomForestRegressor(n_estimators=150, random_state=42)
-model_match.fit(Xm_tr, ym_tr)
-
-print("✅ Match R²:", r2_score(ym_te, model_match.predict(Xm_te)))
 
 joblib.dump(tfidf_match, "models/tfidf_match.pkl")
-joblib.dump(model_match, "models/model_match.pkl")
+
 
 # ---- Skills List (Keyword-safe) ----
 skills = sorted({
@@ -89,3 +82,4 @@ with open("models/skills.json", "w") as f:
     json.dump(skills, f)
 
 print("🎉 TRAINING COMPLETE")
+
