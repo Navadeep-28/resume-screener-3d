@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Batch Screening Results</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        body {
+            background: #0b0f1a;
+            color: #e5e7eb;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 24px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #7dd3fc;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        #chart {
+            margin-bottom: 40px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: center;
+        }
+
+        th {
+            background: rgba(125, 211, 252, 0.15);
+            color: #7dd3fc;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        tr:hover {
+            background: rgba(125, 211, 252, 0.08);
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .high { background: #16a34a; }
+        .medium { background: #eab308; color: #000; }
+        .low { background: #dc2626; }
+
+        .back-btn {
+            margin-top: 30px;
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #38bdf8, #6366f1);
+            color: #000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Batch Screening Results</h1>
+    <p class="subtitle">Job Role: <strong>{{ job_role }}</strong></p>
+
+    {% if results and results|length > 0 %}
+
+    <!-- Chart -->
+    <div id="chart"></div>
+
+    <!-- Results Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Resume</th>
+                <th>Final Score</th>
+                <th>Quality</th>
+                <th>JD Match</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in results %}
+            <tr>
+                <td>#{{ loop.index }}</td>
+                <td>{{ r.filename }}</td>
+                <td>{{ r.final }}%</td>
+                <td>{{ r.quality }}%</td>
+                <td>{{ r.match }}%</td>
+                <td>
+                    {% if r.final >= 75 %}
+                        <span class="badge high">Strong Fit</span>
+                    {% elif r.final >= 50 %}
+                        <span class="badge medium">Average</span>
+                    {% else %}
+                        <span class="badge low">Weak Fit</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+        <p style="text-align:center;">No resumes processed.</p>
+    {% endif %}
+
+    <div style="text-align:center;">
+        <a href="{{ url_for('index') }}" class="back-btn">⬅ Back</a>
+    </div>
+
+</div>
+
+<!-- ✅ ES MODULE SCRIPT -->
+<script type="module">
+    import Plotly from "https://cdn.plot.ly/plotly-2.35.2.min.js";
+
+    const results = {{ results | tojson }};
+
+    const top = results.slice(0, 5);
+
+    const data = [{
+        x: top.map(r => r.filename),
+        y: top.map(r => r.final),
+        type: "bar",
+        marker: {
+            color: "rgba(125, 211, 252, 0.85)"
+        }
+    }];
+
+    const layout = {
+        title: "Top 5 Candidates",
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        font: { color: "#e5e7eb" },
+        yaxis: { title: "Final Score (%)" }
+    };
+
+    Plotly.newPlot("chart", data, layout, { responsive: true });
+</script>
+
+</body>
+</html>
