@@ -133,7 +133,7 @@
         </h2>
         <p>Upload multiple resumes and get ranked results instantly</p>
 
-        <form method="POST" action="{{ url_for('batch-screen') }}" data-mode="batch" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('batch_screen') }}" data-mode="batch" enctype="multipart/form-data">
             <div class="form-group">
                 <label class="field-label">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -204,7 +204,7 @@
         </h2>
         <p>Find out which candidate fits the role better</p>
 
-        <form method="POST" action="{{ url_for('compare-resumes') }}" data-mode="compare" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('compare_resumes') }}" data-mode="compare" enctype="multipart/form-data">
             <div class="form-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 1; min-width: 200px;">
                     <label class="field-label">
@@ -578,41 +578,12 @@
     }
 </script>
 
-<!-- Three.js ES Module + Main Script -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js"
-  }
-}
-</script>
 
-<script type="module">
-    import * as THREE from 'three';
-    
-    // Initialize Three.js scene
-    const canvas = document.getElementById('three-canvas');
-    if (canvas) {
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
-        
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.position.z = 5;
-        
-        // Add your Three.js initialization code here
-        
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    }
-</script>
+
 
 <!-- Load your main script as a module if needed -->
 <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
-<script type="module" src="{{ url_for('static', filename='main.js') }}"></script>
+
 
 
 
