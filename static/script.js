@@ -1,5 +1,6 @@
 // ================= IMPORT THREE.JS (SINGLE INSTANCE) =================
-import * as THREE from "three";
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js";
+
 
 // ================= DYNAMIC RESUME SCREENER =================
 
@@ -222,3 +223,4 @@ function initSpinnerDots() {
         dots.textContent = ".".repeat(step);
     }, 300);
 }
+
