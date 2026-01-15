@@ -1,5 +1,5 @@
-// ================= IMPORT THREE.JS =================
-import * as THREE from 'three';
+// ================= IMPORT THREE.JS (SINGLE INSTANCE) =================
+import * as THREE from "three";
 
 // ================= DYNAMIC RESUME SCREENER =================
 
@@ -17,24 +17,20 @@ Looking for a Python Developer with experience in Flask, Django,
 REST APIs, SQL databases, and basic machine learning concepts.
 Strong problem-solving skills required.
 `,
-
     data_scientist: `
 Seeking a Data Scientist skilled in Python, Pandas, NumPy,
 Machine Learning, Statistics, and Data Visualization.
 NLP experience is a plus.
 `,
-
     ml_engineer: `
 Machine Learning Engineer with hands-on experience in
 model training, deployment, scikit-learn, TensorFlow or PyTorch,
 and NLP pipelines.
 `,
-
     frontend_dev: `
 Frontend Developer with strong knowledge of HTML, CSS, JavaScript,
 React, responsive design, and UI/UX principles.
 `,
-
     backend_dev: `
 Backend Developer experienced in APIs, databases, authentication,
 Python or Java, and system design concepts.
@@ -45,7 +41,6 @@ Python or Java, and system design concepts.
 function initJobTemplates() {
     const roleSelect = document.getElementById("job-role");
     const jdTextarea = document.getElementById("job-desc");
-
     if (!roleSelect || !jdTextarea) return;
 
     roleSelect.addEventListener("change", () => {
@@ -59,7 +54,7 @@ function initJobTemplates() {
 /* ================= 3D BACKGROUND ================= */
 function init3DCanvas() {
     const canvas = document.getElementById("three-canvas");
-    if (!canvas) return;
+    if (!canvas || !window.WebGLRenderingContext) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -74,6 +69,8 @@ function init3DCanvas() {
         alpha: true,
         antialias: true
     });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     const particles = new THREE.BufferGeometry();
@@ -90,7 +87,7 @@ function init3DCanvas() {
 
     const material = new THREE.PointsMaterial({
         color: 0x00e6ff,
-        size: 0.05,  // Increased from 0.008 - try values between 0.01 and 0.1
+        size: 0.05,
         transparent: true,
         opacity: 0.8,
         sizeAttenuation: true
@@ -102,9 +99,9 @@ function init3DCanvas() {
     camera.position.z = 5;
 
     function animate() {
-        requestAnimationFrame(animate);
         particleSystem.rotation.y += 0.0005;
         renderer.render(scene, camera);
+        requestAnimationFrame(animate);
     }
     animate();
 
@@ -115,7 +112,6 @@ function init3DCanvas() {
     });
 }
 
-
 /* ================= FORM SUBMISSION ================= */
 function initForm() {
     const form = document.getElementById("upload-form");
@@ -124,15 +120,11 @@ function initForm() {
 
     if (!form || !spinner || !container) return;
 
-    // 🔑 Detect screening mode from form attribute
     const mode = form.getAttribute("data-mode") || "single";
 
-    // ✅ Allow normal submit for batch & compare
-    if (mode !== "single") {
-        return;
-    }
+    // 🔒 Batch & Compare handled elsewhere
+    if (mode !== "single") return;
 
-    // ✅ AJAX ONLY for single resume screening
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -148,8 +140,7 @@ function initForm() {
             if (!response.ok) throw new Error("Server error");
 
             const html = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
+            const doc = new DOMParser().parseFromString(html, "text/html");
 
             const newResults = doc.querySelector(".results");
             const newError = doc.querySelector(".error");
@@ -157,10 +148,8 @@ function initForm() {
             container.querySelectorAll(".results, .error").forEach(el => el.remove());
 
             if (newError) container.appendChild(newError);
-
             if (newResults) {
                 container.appendChild(newResults);
-
                 setTimeout(() => {
                     renderSkillsChart();
                     applyHeatmap();
@@ -171,7 +160,7 @@ function initForm() {
             console.error(err);
             container.insertAdjacentHTML(
                 "beforeend",
-                '<div class="error">❌ Network or server error. Check terminal.</div>'
+                `<div class="error">❌ Network or server error.</div>`
             );
         } finally {
             spinner.style.display = "none";
@@ -180,7 +169,6 @@ function initForm() {
     });
 }
 
-
 /* ================= SKILLS CHART ================= */
 function renderSkillsChart() {
     if (!window.Plotly) return;
@@ -188,12 +176,7 @@ function renderSkillsChart() {
     const skills = [];
     document.querySelectorAll(".skills-list li").forEach(li => {
         const match = li.textContent.match(/(.+?) \((\d+)%\)/);
-        if (match) {
-            skills.push({
-                name: match[1],
-                score: Number(match[2]) / 100
-            });
-        }
+        if (match) skills.push({ name: match[1], score: Number(match[2]) / 100 });
     });
 
     if (!skills.length) return;
@@ -202,15 +185,9 @@ function renderSkillsChart() {
         values: skills.slice(0, 6).map(s => s.score),
         labels: skills.slice(0, 6).map(s => s.name),
         type: "pie",
-        hole: 0.4,
-        textinfo: "label+percent",
-        textposition: "outside",
-        marker: {
-            colors: ["#00e6ff", "#667eea", "#764ba2", "#ff6b9d", "#00ff88", "#ffd23f"]
-        }
+        hole: 0.4
     }], {
-        title: { text: "💎 Top Skills Match", font: { size: 18 } },
-        showlegend: false,
+        title: "💎 Top Skills Match",
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "rgba(0,0,0,0)"
     }, { responsive: true });
@@ -225,8 +202,10 @@ function applyHeatmap() {
     let html = preview.innerText;
 
     heatWords.forEach(word => {
-        const regex = new RegExp(`\\b(${word})\\b`, "gi");
-        html = html.replace(regex, `<span class="heat-word">$1</span>`);
+        html = html.replace(
+            new RegExp(`\\b(${word})\\b`, "gi"),
+            `<span class="heat-word">$1</span>`
+        );
     });
 
     preview.innerHTML = html;
@@ -243,5 +222,3 @@ function initSpinnerDots() {
         dots.textContent = ".".repeat(step);
     }, 300);
 }
-
-
