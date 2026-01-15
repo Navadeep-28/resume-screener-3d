@@ -2,7 +2,7 @@
 // ================= RESUME COMPARISON (ES MODULE) =================
 
 export function initResumeComparison() {
-    const compareForm = document.querySelector('form[action="/compare_resumes"]');
+    const compareForm = document.querySelector('form[action="/compare-resumes"]');
     if (!compareForm) return;
 
     compareForm.addEventListener("submit", async (e) => {
@@ -11,13 +11,27 @@ export function initResumeComparison() {
         const formData = new FormData(compareForm);
 
         try {
-            const res = await fetch("/compare_resumes", {
+            const res = await fetch("/compare-resumes", {
                 method: "POST",
                 body: formData
             });
 
+            // ---- SAFETY CHECK: JSON vs HTML ----
+            const contentType = res.headers.get("content-type") || "";
+
+            if (!contentType.includes("application/json")) {
+                const text = await res.text();
+                console.error("Expected JSON but received:", text);
+                throw new Error("Server returned HTML instead of JSON");
+            }
+
             const data = await res.json();
 
+            if (!data.resume_1 || !data.resume_2 || !data.winner) {
+                throw new Error("Invalid comparison response format");
+            }
+
+            // ---- RENDER RESULTS ----
             const html = `
                 <div class="glass-card" id="compare_results">
                     <h3>🏆 Better Resume: ${data.winner.replace("_", " ").toUpperCase()}</h3>
@@ -54,6 +68,19 @@ export function initResumeComparison() {
 
         } catch (err) {
             console.error("Resume comparison failed:", err);
+
+            const existing = document.getElementById("compare_results");
+            if (existing) existing.remove();
+
+            compareForm.parentElement.insertAdjacentHTML(
+                "beforeend",
+                `
+                <div class="glass-card error" id="compare_results">
+                    <p>❌ Resume comparison failed.</p>
+                    <small>Check console or backend logs.</small>
+                </div>
+                `
+            );
         }
     });
 }
