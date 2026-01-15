@@ -1,42 +1,32 @@
 // static/mode-switch.js
-// ================= MODE SWITCH (SAFE ES MODULE) =================
+// ================= MODE SWITCH (FIXED ES MODULE) =================
 
 export function initModeSwitch() {
     const buttons = document.querySelectorAll(".mode-btn");
-    const form = document.querySelector("form");
-    if (!form || buttons.length === 0) return;
+    const sections = document.querySelectorAll(".mode-section");
 
-    const singleInput = form.querySelector('input[name="resume"]');
-    const batchBlock = form.querySelector(".mode-batch");
-    const compareBlock = form.querySelector(".mode-compare");
+    if (buttons.length === 0 || sections.length === 0) return;
 
+    function switchMode(mode) {
+        // Toggle sections
+        sections.forEach(section => {
+            section.style.display =
+                section.dataset.mode === mode ? "block" : "none";
+        });
+
+        // Toggle active button
+        buttons.forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.mode === mode);
+        });
+    }
+
+    // Default mode
+    switchMode("single");
+
+    // Button clicks
     buttons.forEach(btn => {
         btn.addEventListener("click", () => {
-            buttons.forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            const mode = btn.dataset.mode;
-
-            // ---- SAFE RESET ----
-            if (batchBlock) batchBlock.style.display = "none";
-            if (compareBlock) compareBlock.style.display = "none";
-            if (singleInput) singleInput.style.display = "block";
-
-            // Default action (single screening)
-            form.action = "/";
-
-            // ---- MODE SWITCH ----
-            if (mode === "batch") {
-                if (singleInput) singleInput.style.display = "none";
-                if (batchBlock) batchBlock.style.display = "block";
-                form.action = "/batch-screen";
-            }
-
-            if (mode === "compare") {
-                if (singleInput) singleInput.style.display = "none";
-                if (compareBlock) compareBlock.style.display = "block";
-                form.action = "/compare-resumes";
-            }
+            switchMode(btn.dataset.mode);
         });
     });
 }
