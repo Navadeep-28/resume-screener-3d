@@ -133,7 +133,7 @@
         </h2>
         <p>Upload multiple resumes and get ranked results instantly</p>
 
-        <form method="POST" action="{{ url_for('batch_screen') }}" data-mode="batch" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('batch-screen') }}" data-mode="batch" enctype="multipart/form-data">
             <div class="form-group">
                 <label class="field-label">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -204,7 +204,7 @@
         </h2>
         <p>Find out which candidate fits the role better</p>
 
-        <form method="POST" action="{{ url_for('compare_resumes') }}" data-mode="compare" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('compare-resumes') }}" data-mode="compare" enctype="multipart/form-data">
             <div class="form-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 1; min-width: 200px;">
                     <label class="field-label">
@@ -613,7 +613,6 @@
 <!-- Load your main script as a module if needed -->
 <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='main.js') }}"></script>
-<script type="module" src="{{ url_for('static', filename='js/background3d.js') }}"></script>
 
 
 
