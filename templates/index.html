@@ -59,7 +59,7 @@
     
     {% if not success %}
     <div class="mode-section" data-mode="single">
-        <form method="POST" data-mode="single" enctype="multipart/form-data" class="glass-card form-card mode-section mode-single">
+        <form method="POST" enctype="multipart/form-data" class="glass-card form-card">
 
             <h2>
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 24px; height: 24px; display: inline-block; vertical-align: middle; margin-right: 8px;">
@@ -127,8 +127,8 @@
     <!-- ===================================================== -->
     <!-- 🔥 BATCH RESUME SCREENING -->
     <!-- ===================================================== -->
-<div class="mode-section" data-mode="batch">
-    <section class="glass-card form-card mode-section mode-batch" style="margin-top:2rem; display:none;">
+<div class="mode-section" data-mode="batch" style="display:none;">
+    <section class="glass-card form-card" style="margin-top:2rem;">
         <h2>
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 24px; height: 24px; display: inline-block; vertical-align: middle; margin-right: 8px;">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
@@ -137,7 +137,7 @@
         </h2>
         <p>Upload multiple resumes and get ranked results instantly</p>
 
-        <form method="POST" action="{{ url_for('batch_screen') }}" data-mode="batch" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('batch_screen') }}" enctype="multipart/form-data">
             <div class="form-group">
                 <label class="field-label">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -197,8 +197,8 @@
     <!-- ===================================================== -->
     <!-- 🔥 COMPARE TWO RESUMES -->
     <!-- ===================================================== -->
-<div class="mode-section" data-mode="compare">
-    <section class="glass-card form-card mode-section mode-compare" style="margin-top:2rem; display:none;">
+<div class="mode-section" data-mode="compare" style="display:none;">
+    <section class="glass-card form-card" style="margin-top:2rem;">
         <h2>
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width: 24px; height: 24px; display: inline-block; vertical-align: middle; margin-right: 8px;">
                 <path d="M16 3h5v5"></path>
@@ -210,7 +210,7 @@
         </h2>
         <p>Find out which candidate fits the role better</p>
 
-        <form method="POST" action="{{ url_for('compare_resumes') }}" data-mode="compare" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('compare_resumes') }}" enctype="multipart/form-data">
             <div class="form-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 1; min-width: 200px;">
                     <label class="field-label">
