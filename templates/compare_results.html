@@ -1,0 +1,58 @@
+{% extends "index.html" %}
+{% block results %}
+
+<div id="dynamic-results">
+
+{% for key, r in {
+    'resume_1': resume_1,
+    'resume_2': resume_2
+}.items() %}
+
+{% set final = r.final * 100 %}
+{% set match = r.match * 100 %}
+{% set status = "PASS" if final >= 65 else "FAIL" %}
+{% set risk = "HIGH" if final < 60 else "LOW" %}
+{% set is_winner = (winner == key) %}
+
+<section class="results glass-card result-landscape {{ 'winner' if is_winner }}">
+    <div class="result-col status-col">
+        <div class="status-pill {{ 'pass' if status == 'PASS' else 'fail' }}">
+            {{ status }}
+        </div>
+        <div class="status-card">
+            <h3>{{ key.replace('_',' ').title() }} {% if is_winner %}🏆{% endif %}</h3>
+            <p>ATS Confidence: 70%</p>
+        </div>
+    </div>
+
+    <div class="result-col metrics-col">
+        <div class="metric-card">
+            <span class="metric-label">JD Coverage</span>
+            <span class="metric-value blue">{{ r.coverage }}%</span>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Hiring Risk</span>
+            <span class="metric-value {{ 'danger' if risk == 'HIGH' else 'success' }}">
+                {{ risk }}
+            </span>
+        </div>
+    </div>
+
+    <div class="result-col score-col">
+        <div class="final-score">
+            <span>Final Score</span>
+            <h2>{{ final | round(1) }}%</h2>
+        </div>
+        <div class="mini-scores">
+            <div class="mini-card">
+                Job Match<br><strong>{{ match | round(1) }}%</strong>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}
