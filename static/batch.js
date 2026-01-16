@@ -16,13 +16,15 @@ export function initBatchScreening() {
                 body: formData
             });
 
-            // ---- SAFETY CHECK: JSON vs HTML ----
             const contentType = res.headers.get("content-type") || "";
 
+            // ✅ FALLBACK: Server returned HTML → render it
             if (!contentType.includes("application/json")) {
-                const text = await res.text();
-                console.error("Expected JSON but received:", text);
-                throw new Error("Server returned HTML instead of JSON");
+                const html = await res.text();
+                document.open();
+                document.write(html);
+                document.close();
+                return;
             }
 
             const data = await res.json();
@@ -35,7 +37,7 @@ export function initBatchScreening() {
             const container = document.getElementById("dynamic-results");
             if (!container) return;
 
-            container.innerHTML = ""; // clear old results
+            container.innerHTML = "";
 
             data.ranked_results.forEach((r, index) => {
                 const status = r.final >= 65 ? "PASS" : "FAIL";
