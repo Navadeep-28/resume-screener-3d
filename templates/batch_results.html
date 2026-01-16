@@ -1,54 +1,35 @@
 {% extends "index.html" %}
-{% block results %}
+{% block content %}
 
-<div id="dynamic-results">
+<h2>Batch Screening Results</h2>
 
+{% if ranked_results %}
     {% for r in ranked_results %}
-    {% set status = "PASS" if r.final >= 65 else "FAIL" %}
-    {% set risk = "HIGH" if r.final < 60 else "LOW" %}
-
     <section class="results glass-card result-landscape">
         <div class="result-col status-col">
-            <div class="status-pill {{ 'pass' if status == 'PASS' else 'fail' }}">
-                {{ status }}
+            <div class="status-pill {{ 'pass' if r.final >= 65 else 'fail' }}">
+                {{ 'PASS' if r.final >= 65 else 'FAIL' }}
             </div>
-            <div class="status-card">
-                <h3>#{{ loop.index }} {{ r.filename }}</h3>
-                <p>ATS Confidence: 70%</p>
-            </div>
+            <h3>#{{ loop.index }} {{ r.filename }}</h3>
         </div>
 
         <div class="result-col metrics-col">
             <div class="metric-card">
-                <span class="metric-label">JD Coverage</span>
-                <span class="metric-value blue">{{ r.coverage }}%</span>
+                JD Coverage <strong>{{ r.coverage }}%</strong>
             </div>
             <div class="metric-card">
-                <span class="metric-label">Hiring Risk</span>
-                <span class="metric-value {{ 'danger' if risk == 'HIGH' else 'success' }}">
-                    {{ risk }}
-                </span>
+                Job Match <strong>{{ r.match }}%</strong>
             </div>
         </div>
 
         <div class="result-col score-col">
-            <div class="final-score">
-                <span>Final Score</span>
-                <h2>{{ r.final }}%</h2>
-            </div>
-            <div class="mini-scores">
-                <div class="mini-card">
-                    Quality<br><strong>{{ r.quality }}%</strong>
-                </div>
-                <div class="mini-card">
-                    Job Match<br><strong>{{ r.match }}%</strong>
-                </div>
-            </div>
+            <h2>{{ r.final }}%</h2>
+            <small>Quality: {{ r.quality }}%</small>
         </div>
     </section>
-
     {% endfor %}
-
-</div>
+{% else %}
+    <p>No valid resumes found.</p>
+{% endif %}
 
 {% endblock %}
