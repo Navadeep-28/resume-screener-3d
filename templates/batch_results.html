@@ -1,35 +1,32 @@
-{% extends "index.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Batch Screening Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
 
+<div class="container">
 <h2>Batch Screening Results</h2>
 
-{% if ranked_results %}
+{% if error %}
+    <div class="glass-card error">{{ error }}</div>
+{% else %}
     {% for r in ranked_results %}
     <section class="results glass-card result-landscape">
-        <div class="result-col status-col">
-            <div class="status-pill {{ 'pass' if r.final >= 65 else 'fail' }}">
-                {{ 'PASS' if r.final >= 65 else 'FAIL' }}
-            </div>
+        <div class="result-col">
             <h3>#{{ loop.index }} {{ r.filename }}</h3>
-        </div>
-
-        <div class="result-col metrics-col">
-            <div class="metric-card">
-                JD Coverage <strong>{{ r.coverage }}%</strong>
-            </div>
-            <div class="metric-card">
-                Job Match <strong>{{ r.match }}%</strong>
-            </div>
-        </div>
-
-        <div class="result-col score-col">
-            <h2>{{ r.final }}%</h2>
-            <small>Quality: {{ r.quality }}%</small>
+            <p>Final Score: {{ r.final }}%</p>
+            <p>Quality: {{ r.quality }}%</p>
+            <p>Job Match: {{ r.match }}%</p>
+            <p>JD Coverage: {{ r.coverage }}%</p>
         </div>
     </section>
     {% endfor %}
-{% else %}
-    <p>No valid resumes found.</p>
 {% endif %}
 
-{% endblock %}
+<a href="{{ url_for('clear') }}" class="clear-btn">New Batch Screening</a>
+</div>
+
+</body>
+</html>
