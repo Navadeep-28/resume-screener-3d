@@ -475,11 +475,9 @@ def batch_screen():
         return jsonify({"error": "Unauthorized"}), 401
 
     if not MODELS:
-        return render_template(
-            "index.html",
-            error="⚠️ ML models not loaded.",
-            job_templates=JOB_TEMPLATES
-        )
+        return jsonify({
+            "error": "⚠️ ML models not loaded."
+        }), 500
 
     files = request.files.getlist("resumes")
     job_desc = request.form.get("job_desc", "")
@@ -522,10 +520,11 @@ def batch_screen():
     # Rank candidates (best first)
     results.sort(key=lambda x: x["final"], reverse=True)
 
-   return jsonify({
-    "ranked_results": results,
-    "job_role": job_role
-})
+    return jsonify({
+        "ranked_results": results,
+        "job_role": job_role
+    })
+
 
 
 
@@ -538,11 +537,9 @@ def compare_resumes():
         return jsonify({"error": "Unauthorized"}), 401
 
     if not MODELS:
-        return render_template(
-            "index.html",
-            error="⚠️ ML models not loaded.",
-            job_templates=JOB_TEMPLATES
-        )
+        return jsonify({
+            "error": "⚠️ ML models not loaded."
+        }), 500
 
     r1 = request.files.get("resume1")
     r2 = request.files.get("resume2")
@@ -550,11 +547,9 @@ def compare_resumes():
     job_role = request.form.get("job_role")
 
     if not r1 or not r2:
-        return render_template(
-            "index.html",
-            error="Please upload both resumes",
-            job_templates=JOB_TEMPLATES
-        )
+        return jsonify({
+            "error": "Please upload both resumes"
+        }), 400
 
     if job_role in JOB_TEMPLATES and not job_desc.strip():
         job_desc = JOB_TEMPLATES[job_role]
@@ -573,22 +568,20 @@ def compare_resumes():
     s1 = score_resume(text1, job_desc)
     s2 = score_resume(text2, job_desc)
 
-    better = "Resume 1" if s1["final"] > s2["final"] else "Resume 2"
-
     return jsonify({
-    "winner": "resume_1" if s1["final"] > s2["final"] else "resume_2",
-    "resume_1": {
-        "final": s1["final"],
-        "match": s1["match"],
-        "coverage": s1["coverage"]
-    },
-    "resume_2": {
-        "final": s2["final"],
-        "match": s2["match"],
-        "coverage": s2["coverage"]
-    }
-})
-)
+        "winner": "resume_1" if s1["final"] > s2["final"] else "resume_2",
+        "resume_1": {
+            "final": s1["final"],
+            "match": s1["match"],
+            "coverage": s1["coverage"]
+        },
+        "resume_2": {
+            "final": s2["final"],
+            "match": s2["match"],
+            "coverage": s2["coverage"]
+        }
+    })
+
 
 
 # ================= UTIL =================
@@ -619,6 +612,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
