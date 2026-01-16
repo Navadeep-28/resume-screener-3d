@@ -37,7 +37,7 @@ export function initBatchScreening() {
                 output += `
                     <li>
                         <strong>${r.filename}</strong><br>
-                        Final Score: ${(r.final * 100).toFixed(1)}%<br>
+                        Final Score: ${r.final.toFixed(1)}%<br>
                         JD Coverage: ${r.coverage}%
                     </li>
                 `;
