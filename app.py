@@ -472,14 +472,25 @@ def index():
 @app.route("/batch-screen", methods=["POST"])
 def batch_screen():
     if not login_required():
-        return jsonify({"error": "Unauthorized"}), 401
+        return redirect(url_for("login"))
 
     if not MODELS:
-        return jsonify({
-            "error": "⚠️ ML models not loaded."
-        }), 500
+        return render_template(
+            "index.html",
+            error="⚠️ ML models not loaded.",
+            job_templates=JOB_TEMPLATES
+        )
 
+    # 🔑 FIX 1: match input name
     files = request.files.getlist("resumes")
+
+    if not files:
+        return render_template(
+            "index.html",
+            error="Please upload at least one resume for batch screening.",
+            job_templates=JOB_TEMPLATES
+        )
+
     job_desc = request.form.get("job_desc", "")
     job_role = request.form.get("job_role")
 
@@ -489,18 +500,22 @@ def batch_screen():
     results = []
 
     for file in files:
-        if not file or not file.filename.endswith(".pdf"):
+        if not file or not file.filename.lower().endswith(".pdf"):
             continue
 
         path = os.path.join(UPLOAD, file.filename)
         file.save(path)
 
         text = ""
-        with open(path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
-            for page in reader.pages:
-                if page.extract_text():
-                    text += page.extract_text()
+        try:
+            with open(path, "rb") as f:
+                reader = PyPDF2.PdfReader(f)
+                for page in reader.pages:
+                    if page.extract_text():
+                        text += page.extract_text()
+        except Exception:
+            os.remove(path)
+            continue
 
         os.remove(path)
 
@@ -517,7 +532,7 @@ def batch_screen():
             "coverage": scores["coverage"]
         })
 
-    # Rank candidates (best first)
+    # Rank best first
     results.sort(key=lambda x: x["final"], reverse=True)
 
     return render_template(
@@ -530,18 +545,21 @@ def batch_screen():
 
 
 
+
 # =========================================================
 # 🔥 COMPARE TWO RESUMES
 # =========================================================
 @app.route("/compare-resumes", methods=["POST"])
 def compare_resumes():
     if not login_required():
-        return jsonify({"error": "Unauthorized"}), 401
+        return redirect(url_for("login"))
 
     if not MODELS:
-        return jsonify({
-            "error": "⚠️ ML models not loaded."
-        }), 500
+        return render_template(
+            "index.html",
+            error="⚠️ ML models not loaded.",
+            job_templates=JOB_TEMPLATES
+        )
 
     r1 = request.files.get("resume1")
     r2 = request.files.get("resume2")
@@ -549,23 +567,35 @@ def compare_resumes():
     job_role = request.form.get("job_role")
 
     if not r1 or not r2:
-        return jsonify({
-            "error": "Please upload both resumes"
-        }), 400
+        return render_template(
+            "index.html",
+            error="Please upload both resumes for comparison.",
+            job_templates=JOB_TEMPLATES
+        )
 
     if job_role in JOB_TEMPLATES and not job_desc.strip():
         job_desc = JOB_TEMPLATES[job_role]
 
     def extract_text(file):
         text = ""
-        reader = PyPDF2.PdfReader(file)
-        for page in reader.pages:
-            if page.extract_text():
-                text += page.extract_text()
+        try:
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                if page.extract_text():
+                    text += page.extract_text()
+        except Exception:
+            return ""
         return text
 
     text1 = extract_text(r1)
     text2 = extract_text(r2)
+
+    if not text1 or not text2:
+        return render_template(
+            "index.html",
+            error="One or both resumes could not be read. Scanned PDFs are not supported.",
+            job_templates=JOB_TEMPLATES
+        )
 
     s1 = score_resume(text1, job_desc)
     s2 = score_resume(text2, job_desc)
@@ -573,17 +603,18 @@ def compare_resumes():
     return render_template(
         "compare_results.html",
         resume_1={
-            "final": s1["final"],
-            "match": s1["match"],
+            "final": round(s1["final"] * 100, 2),
+            "match": round(s1["match"] * 100, 2),
             "coverage": s1["coverage"]
         },
         resume_2={
-            "final": s2["final"],
-            "match": s2["match"],
+            "final": round(s2["final"] * 100, 2),
+            "match": round(s2["match"] * 100, 2),
             "coverage": s2["coverage"]
         },
         winner="resume_1" if s1["final"] > s2["final"] else "resume_2"
     )
+
 
 
 
@@ -616,6 +647,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
