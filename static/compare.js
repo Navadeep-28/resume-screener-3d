@@ -16,13 +16,15 @@ export function initResumeComparison() {
                 body: formData
             });
 
-            // ---- SAFETY CHECK: JSON vs HTML ----
             const contentType = res.headers.get("content-type") || "";
 
+            // ✅ FALLBACK: Server returned HTML → render it
             if (!contentType.includes("application/json")) {
-                const text = await res.text();
-                console.error("Expected JSON but received:", text);
-                throw new Error("Server returned HTML instead of JSON");
+                const html = await res.text();
+                document.open();
+                document.write(html);
+                document.close();
+                return;
             }
 
             const data = await res.json();
@@ -31,63 +33,40 @@ export function initResumeComparison() {
                 throw new Error("Invalid comparison response format");
             }
 
-            const container = document.getElementById("dynamic-results");
-            if (!container) return;
+            // ---- RENDER RESULTS (EXISTING UI LOGIC) ----
+            const html = `
+                <div class="glass-card" id="compare_results">
+                    <h3>🏆 Better Resume: ${data.winner.replace("_", " ").toUpperCase()}</h3>
 
-            container.innerHTML = ""; // clear old results
+                    <table style="width:100%; margin-top:1rem;">
+                        <tr>
+                            <th></th>
+                            <th>Resume 1</th>
+                            <th>Resume 2</th>
+                        </tr>
+                        <tr>
+                            <td>Final Score</td>
+                            <td>${(data.resume_1.final * 100).toFixed(1)}%</td>
+                            <td>${(data.resume_2.final * 100).toFixed(1)}%</td>
+                        </tr>
+                        <tr>
+                            <td>Job Match</td>
+                            <td>${(data.resume_1.match * 100).toFixed(1)}%</td>
+                            <td>${(data.resume_2.match * 100).toFixed(1)}%</td>
+                        </tr>
+                        <tr>
+                            <td>JD Coverage</td>
+                            <td>${data.resume_1.coverage}%</td>
+                            <td>${data.resume_2.coverage}%</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
 
-            const resumes = [
-                { label: "Resume 1", data: data.resume_1, key: "resume_1" },
-                { label: "Resume 2", data: data.resume_2, key: "resume_2" }
-            ];
+            const existing = document.getElementById("compare_results");
+            if (existing) existing.remove();
 
-            resumes.forEach((r) => {
-                const finalPct = (r.data.final * 100);
-                const matchPct = (r.data.match * 100);
-
-                const status = finalPct >= 65 ? "PASS" : "FAIL";
-                const risk = finalPct < 60 ? "HIGH" : "LOW";
-                const isWinner = data.winner === r.key;
-
-                container.innerHTML += `
-                <section class="results glass-card result-landscape ${isWinner ? "winner" : ""}">
-                    <div class="result-col status-col">
-                        <div class="status-pill ${status === "PASS" ? "pass" : "fail"}">
-                            ${status}
-                        </div>
-                        <div class="status-card">
-                            <h3>${r.label} ${isWinner ? "🏆" : ""}</h3>
-                            <p>ATS Confidence: 70%</p>
-                        </div>
-                    </div>
-
-                    <div class="result-col metrics-col">
-                        <div class="metric-card">
-                            <span class="metric-label">JD Coverage</span>
-                            <span class="metric-value blue">${r.data.coverage}%</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-label">Hiring Risk</span>
-                            <span class="metric-value ${risk === "HIGH" ? "danger" : "success"}">
-                                ${risk}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="result-col score-col">
-                        <div class="final-score">
-                            <span>Final Score</span>
-                            <h2>${finalPct.toFixed(1)}%</h2>
-                        </div>
-                        <div class="mini-scores">
-                            <div class="mini-card">
-                                Job Match<br><strong>${matchPct.toFixed(1)}%</strong>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                `;
-            });
+            compareForm.parentElement.insertAdjacentHTML("beforeend", html);
 
         } catch (err) {
             console.error("Resume comparison failed:", err);
