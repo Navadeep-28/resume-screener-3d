@@ -13,6 +13,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from spacy.cli import download
+from math import ceil
 
 # ================= NLP =================
 try:
@@ -476,10 +477,7 @@ def batch_screen():
             return redirect(url_for("login"))
 
         if not MODELS:
-            return render_template(
-                "batch_results.html",
-                error="ML models not loaded"
-            )
+            return render_template("batch_results.html", error="ML models not loaded")
 
         files = request.files.getlist("resumes")
         job_desc = request.form.get("job_desc", "")
@@ -488,12 +486,6 @@ def batch_screen():
         if job_role in JOB_TEMPLATES and not job_desc.strip():
             job_desc = JOB_TEMPLATES[job_role]
 
-        if not files:
-            return render_template(
-                "batch_results.html",
-                error="No resumes uploaded"
-            )
-
         results = []
 
         for file in files:
@@ -501,9 +493,7 @@ def batch_screen():
                 continue
 
             reader = PyPDF2.PdfReader(file)
-            text = ""
-            for page in reader.pages:
-                text += page.extract_text() or ""
+            text = "".join(page.extract_text() or "" for page in reader.pages)
 
             if not text.strip():
                 continue
@@ -519,25 +509,31 @@ def batch_screen():
             })
 
         if not results:
-            return render_template(
-                "batch_results.html",
-                error="Could not extract text from uploaded resumes"
-            )
+            return render_template("batch_results.html", error="No valid resumes found")
 
+        # 🔥 SORT
         results.sort(key=lambda x: x["final"], reverse=True)
+
+        # 🔥 PAGINATION
+        page = int(request.args.get("page", 1))
+        per_page = 5
+        total = len(results)
+        total_pages = ceil(total / per_page)
+
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_results = results[start:end]
 
         return render_template(
             "batch_results.html",
-            ranked_results=results,
-            job_role=job_role
+            ranked_results=paginated_results,
+            page=page,
+            total_pages=total_pages
         )
 
     except Exception as e:
         print("BATCH ERROR:", e)
-        return render_template(
-            "batch_results.html",
-            error="Internal error occurred during batch screening"
-        )
+        return render_template("batch_results.html", error="Internal server error")
 
 
 
@@ -650,6 +646,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
