@@ -117,8 +117,15 @@
 
     <!-- ================= ACTIONS ================= -->
     <div class="actions" style="text-align:center; margin-top:2rem;">
-        <button type="submit" class="compare-btn">
-            🔍 Compare Selected (2)
+
+        <!-- ✅ FIXED: ID + disabled -->
+        <button
+            type="submit"
+            id="compare-btn"
+            class="compare-btn"
+            disabled
+        >
+            🔍 Compare Selected
         </button>
 
         <a href="{{ url_for('clear') }}" class="clear-btn">
