@@ -696,46 +696,34 @@ def export_compare_pdf():
 @app.route("/compare-from-batch", methods=["POST"])
 def compare_from_batch():
     if not login_required():
-        return redirect(url_for("login"))
+        return jsonify({"error": "Unauthorized"}), 401
 
-    filenames = request.form.getlist("selected_resumes")
+    selected = request.form.getlist("compare_ids")
 
-    if len(filenames) != 2:
-        return redirect(url_for("index"))
+    if len(selected) != 2:
+        return "Please select exactly 2 resumes to compare", 400
 
-    job_desc = request.form.get("job_desc", "")
-    job_role = request.form.get("job_role")
+    batch = session.get("last_batch_results")
+    if not batch:
+        return "Batch results expired. Please re-run batch screening.", 400
 
-    if job_role in JOB_TEMPLATES and not job_desc.strip():
-        job_desc = JOB_TEMPLATES[job_role]
+    r1 = batch[int(selected[0])]
+    r2 = batch[int(selected[1])]
 
-    texts = []
-
-    for fname in filenames:
-        path = os.path.join(UPLOAD, fname)
-        if not os.path.exists(path):
-            continue
-
-        with open(path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
-            text = ""
-            for page in reader.pages:
-                if page.extract_text():
-                    text += page.extract_text()
-            texts.append(text)
-
-    if len(texts) != 2:
-        return redirect(url_for("index"))
-
-    s1 = score_resume(texts[0], job_desc)
-    s2 = score_resume(texts[1], job_desc)
+    session["last_compare_results"] = {
+        "resume_1": r1,
+        "resume_2": r2,
+        "winner": "resume_1" if r1["final"] > r2["final"] else "resume_2"
+    }
 
     return render_template(
         "compare_results.html",
-        resume_1=s1,
-        resume_2=s2,
-        winner="resume_1" if s1["final"] > s2["final"] else "resume_2"
+        resume_1=r1,
+        resume_2=r2,
+        winner="resume_1" if r1["final"] > r2["final"] else "resume_2",
+        from_batch=True
     )
+
 
 
 
@@ -769,6 +757,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
