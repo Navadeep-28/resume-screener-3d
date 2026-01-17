@@ -91,3 +91,26 @@ export function initBatchScreening() {
         }
     });
 }
+
+/* ======================================================
+   ✅ ADDED: Batch Compare Checkbox Logic (NO CHANGES ABOVE)
+====================================================== */
+
+document.addEventListener("change", (e) => {
+    if (!e.target.classList.contains("compare-checkbox")) return;
+
+    const checkboxes = [...document.querySelectorAll(".compare-checkbox")];
+    const selected = checkboxes.filter(cb => cb.checked);
+    const compareBtn = document.getElementById("compare-btn");
+
+    // Max 2 selections
+    if (selected.length > 2) {
+        e.target.checked = false;
+        return;
+    }
+
+    // Enable only when exactly 2 selected
+    if (compareBtn) {
+        compareBtn.disabled = selected.length !== 2;
+    }
+});
