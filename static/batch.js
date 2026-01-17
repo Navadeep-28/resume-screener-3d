@@ -93,24 +93,34 @@ export function initBatchScreening() {
 }
 
 /* ======================================================
-   ✅ ADDED: Batch Compare Checkbox Logic (NO CHANGES ABOVE)
+   ✅ FIXED: Batch Compare Checkbox Logic (ES MODULE SAFE)
 ====================================================== */
 
-document.addEventListener("change", (e) => {
-    if (!e.target.classList.contains("compare-checkbox")) return;
+export function initBatchCompare() {
+    const form = document.getElementById("batch-compare-form");
+    if (!form) return;
 
-    const checkboxes = [...document.querySelectorAll(".compare-checkbox")];
-    const selected = checkboxes.filter(cb => cb.checked);
     const compareBtn = document.getElementById("compare-btn");
+    const checkboxes = form.querySelectorAll(".compare-checkbox");
 
-    // Max 2 selections
-    if (selected.length > 2) {
-        e.target.checked = false;
-        return;
-    }
-
-    // Enable only when exactly 2 selected
     if (compareBtn) {
-        compareBtn.disabled = selected.length !== 2;
+        compareBtn.disabled = true;
     }
-});
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener("change", () => {
+            const selected = [...checkboxes].filter(c => c.checked);
+
+            // Max 2 selections
+            if (selected.length > 2) {
+                cb.checked = false;
+                return;
+            }
+
+            // Enable only when exactly 2 selected
+            if (compareBtn) {
+                compareBtn.disabled = selected.length !== 2;
+            }
+        });
+    });
+}
