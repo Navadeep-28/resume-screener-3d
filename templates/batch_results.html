@@ -36,7 +36,6 @@
         <p>Ranked candidates based on AI evaluation</p>
     </header>
 
-    <!-- ================= ERROR ================= -->
     {% if error %}
         <div class="error glass-card">{{ error }}</div>
     {% endif %}
@@ -44,94 +43,94 @@
     <!-- ================= COMPARE FORM ================= -->
     <form method="POST" action="/compare-from-batch" id="batch-compare-form">
 
-    <!-- ================= RESULTS ================= -->
-    {% if ranked_results %}
-        {% for r in ranked_results %}
-        <section class="results glass-card result-landscape">
+        <!-- ✅ ADDED: tells backend this is batch-compare -->
+        <input type="hidden" name="source" value="batch">
 
-            <!-- CHECKBOX -->
-            <div class="compare-select">
-                <input
-                    type="checkbox"
-                    class="compare-checkbox"
-                    name="compare_ids"
-                    value="{{ loop.index0 }}"
-                >
-            </div>
+        {% if ranked_results %}
+            {% for r in ranked_results %}
+            <section class="results glass-card result-landscape">
 
-            <!-- LEFT -->
-            <div class="result-col status-col">
-                {% set status = "PASS" if r.final >= 65 else "FAIL" %}
-                <div class="status-pill {{ 'pass' if status == 'PASS' else 'fail' }}">
-                    {{ status }}
+                <!-- CHECKBOX -->
+                <div class="compare-select">
+                    <input
+                        type="checkbox"
+                        class="compare-checkbox"
+                        name="compare_ids"
+                        value="{{ loop.index0 }}"
+                    >
                 </div>
 
-                <div class="status-card">
-                    <h3>#{{ loop.index }} {{ r.filename }}</h3>
-                    <span class="confidence-chip">
-                        ATS Confidence: {{ r.final }}%
-                    </span>
-                </div>
-            </div>
-
-            <!-- CENTER -->
-            <div class="result-col metrics-col">
-                <div class="metric-card">
-                    <span class="metric-label">JD Coverage</span>
-                    <span class="metric-value blue">{{ r.coverage }}%</span>
-                </div>
-
-                <div class="metric-card">
-                    <span class="metric-label">Hiring Risk</span>
-                    <span class="metric-value
-                        {% if r.final < 60 %}danger
-                        {% elif r.final < 75 %}warning
-                        {% else %}success{% endif %}">
-                        {% if r.final < 60 %}HIGH
-                        {% elif r.final < 75 %}MEDIUM
-                        {% else %}LOW{% endif %}
-                    </span>
-                </div>
-            </div>
-
-            <!-- RIGHT -->
-            <div class="result-col score-col">
-                <div class="final-score">
-                    <span>Final Score</span>
-                    <h2>{{ r.final }}%</h2>
-                </div>
-
-                <div class="mini-scores">
-                    <div class="mini-card">
-                        Quality<br><strong>{{ r.quality }}%</strong>
+                <!-- LEFT -->
+                <div class="result-col status-col">
+                    {% set status = "PASS" if r.final >= 65 else "FAIL" %}
+                    <div class="status-pill {{ 'pass' if status == 'PASS' else 'fail' }}">
+                        {{ status }}
                     </div>
-                    <div class="mini-card">
-                        Job Match<br><strong>{{ r.match }}%</strong>
+
+                    <div class="status-card">
+                        <h3>#{{ loop.index }} {{ r.filename }}</h3>
+                        <span class="confidence-chip">
+                            ATS Confidence: {{ r.final }}%
+                        </span>
                     </div>
                 </div>
-            </div>
 
-        </section>
-        {% endfor %}
-    {% endif %}
+                <!-- CENTER -->
+                <div class="result-col metrics-col">
+                    <div class="metric-card">
+                        <span class="metric-label">JD Coverage</span>
+                        <span class="metric-value blue">{{ r.coverage }}%</span>
+                    </div>
 
-    <!-- ================= ACTIONS ================= -->
-    <div class="actions" style="text-align:center; margin-top:2rem;">
+                    <div class="metric-card">
+                        <span class="metric-label">Hiring Risk</span>
+                        <span class="metric-value
+                            {% if r.final < 60 %}danger
+                            {% elif r.final < 75 %}warning
+                            {% else %}success{% endif %}">
+                            {% if r.final < 60 %}HIGH
+                            {% elif r.final < 75 %}MEDIUM
+                            {% else %}LOW{% endif %}
+                        </span>
+                    </div>
+                </div>
 
-        <!-- ✅ FIXED: ID + disabled -->
-        <button
-            type="submit"
-            id="compare-btn"
-            class="compare-btn"
-            disabled
-        >
-            🔍 Compare Selected
-        </button>
+                <!-- RIGHT -->
+                <div class="result-col score-col">
+                    <div class="final-score">
+                        <span>Final Score</span>
+                        <h2>{{ r.final }}%</h2>
+                    </div>
 
-        <a href="{{ url_for('clear') }}" class="clear-btn">
-            New Batch Screening
-        </a>
-    </div>
+                    <div class="mini-scores">
+                        <div class="mini-card">
+                            Quality<br><strong>{{ r.quality }}%</strong>
+                        </div>
+                        <div class="mini-card">
+                            Job Match<br><strong>{{ r.match }}%</strong>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+            {% endfor %}
+        {% endif %}
+
+        <!-- ================= ACTIONS ================= -->
+        <div class="actions" style="text-align:center; margin-top:2rem;">
+            <button
+                type="submit"
+                id="compare-btn"
+                class="compare-btn"
+                disabled
+            >
+                🔍 Compare Selected
+            </button>
+
+            <a href="{{ url_for('clear') }}" class="clear-btn">
+                New Batch Screening
+            </a>
+        </div>
 
     </form>
 
